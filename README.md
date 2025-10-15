@@ -235,6 +235,3 @@ For questions or issues:
 **Happy Eco Tracking! 🌍✨**
 
 Made with ❤️ using Flutter and Hive
-
-# ecotrackapp
-A simple but eye-catching app that helps students track eco-friendly habits
