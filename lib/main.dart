@@ -5,9 +5,14 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 import 'services/hive_service.dart';
+import 'services/notification_service.dart';
+import 'services/settings_service.dart';
+import 'services/api_service.dart';
 import 'screens/splash_screen.dart';
 import 'utils/theme.dart';
 import 'utils/constants.dart';
+import 'widgets/magic_mode_widgets.dart';
+import 'widgets/power_mode_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,44 +23,42 @@ void main() async {
   // Initialize timezone
   tz.initializeTimeZones();
   
-  // Initialize notifications
-  await AwesomeNotifications().initialize(
-    null,
-    [
-      NotificationChannel(
-        channelKey: AppConstants.notificationChannelId,
-        channelName: AppConstants.notificationChannelName,
-        channelDescription: AppConstants.notificationChannelDescription,
-        defaultColor: AppColors.primary,
-        ledColor: AppColors.primary,
-        importance: NotificationImportance.High,
-        channelShowBadge: true,
-      ),
-    ],
-  );
+  // Initialize notification service
+  await NotificationService.initialize();
   
-  // Request notification permissions
-  await AwesomeNotifications().requestPermissionToSendNotifications();
+  // Initialize settings service
+  final settingsService = SettingsService();
+  await settingsService.initialize();
   
-  runApp(const EcoTrackApp());
+  runApp(EcoTrackApp(settingsService: settingsService));
 }
 
 class EcoTrackApp extends StatelessWidget {
-  const EcoTrackApp({super.key});
+  final SettingsService settingsService;
+  
+  const EcoTrackApp({
+    super.key,
+    required this.settingsService,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => HiveService()),
+        ChangeNotifierProvider.value(value: settingsService),
       ],
-      child: MaterialApp(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const SplashScreen(),
+      child: Consumer<SettingsService>(
+        builder: (context, settings, child) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: settings.isMagicMode 
+                ? MagicModeTheme.themeData 
+                : PowerModeTheme.themeData,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

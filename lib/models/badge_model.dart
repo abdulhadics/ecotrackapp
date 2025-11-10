@@ -73,13 +73,22 @@ class Badge extends HiveObject {
 /// Predefined badges that users can earn
 class BadgeDefinitions {
   static List<Badge> allBadges = [
-    // Starter badges
+    // Starter badges - Lower thresholds for easier achievement
     Badge(
       id: 'green_starter',
       name: 'Green Starter',
       description: 'Complete your first eco habit',
       icon: '🌱',
-      requiredPoints: 10,
+      requiredPoints: 5,
+      category: 'Starter',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'eco_buddy',
+      name: 'Eco Buddy',
+      description: 'Earn your first 15 eco points',
+      icon: '🌿',
+      requiredPoints: 15,
       category: 'Starter',
       isUnlocked: false,
     ),
@@ -93,12 +102,21 @@ class BadgeDefinitions {
       isUnlocked: false,
     ),
     
-    // Point milestones
+    // Point milestones - More achievable thresholds
     Badge(
       id: 'eco_enthusiast',
       name: 'Eco Enthusiast',
-      description: 'Earn 100 eco points',
+      description: 'Earn 50 eco points',
       icon: '🌟',
+      requiredPoints: 50,
+      category: 'Points',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'eco_champion',
+      name: 'Eco Champion',
+      description: 'Earn 100 eco points',
+      icon: '🏆',
       requiredPoints: 100,
       category: 'Points',
       isUnlocked: false,
@@ -106,18 +124,18 @@ class BadgeDefinitions {
     Badge(
       id: 'eco_hero',
       name: 'Eco Hero',
-      description: 'Earn 500 eco points',
+      description: 'Earn 250 eco points',
       icon: '🦸‍♀️',
-      requiredPoints: 500,
+      requiredPoints: 250,
       category: 'Points',
       isUnlocked: false,
     ),
     Badge(
       id: 'eco_legend',
       name: 'Eco Legend',
-      description: 'Earn 1000 eco points',
+      description: 'Earn 500 eco points',
       icon: '👑',
-      requiredPoints: 1000,
+      requiredPoints: 500,
       category: 'Points',
       isUnlocked: false,
     ),
@@ -193,8 +211,10 @@ class BadgeDefinitions {
     
     for (Badge badge in allBadges) {
       if (totalPoints >= badge.requiredPoints) {
-        // Check if user already has this badge
-        bool alreadyHasBadge = currentBadges.any((userBadge) => userBadge.id == badge.id);
+        // Check if user already has this badge unlocked
+        bool alreadyHasBadge = currentBadges.any((userBadge) => 
+          userBadge.id == badge.id && userBadge.isUnlocked);
+        
         if (!alreadyHasBadge) {
           newBadges.add(badge.copyWith(isUnlocked: true, unlockedAt: DateTime.now()));
         }

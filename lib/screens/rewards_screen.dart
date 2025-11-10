@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/hive_service.dart';
+import '../widgets/animated_badge.dart';
 import '../utils/constants.dart';
 
 /// Screen showing badges and achievements
@@ -136,7 +137,11 @@ class _RewardsScreenState extends State<RewardsScreen>
               itemCount: unlockedBadges.length,
               itemBuilder: (context, index) {
                 final badge = unlockedBadges[index];
-                return _buildBadgeCard(badge, true);
+                return AnimatedBadge(
+                  badge: badge,
+                  isNewlyUnlocked: false, // You can track this if needed
+                  onTap: () => _showBadgeDetails(badge),
+                );
               },
             ),
         ],
@@ -180,7 +185,11 @@ class _RewardsScreenState extends State<RewardsScreen>
               itemCount: lockedBadges.length,
               itemBuilder: (context, index) {
                 final badge = lockedBadges[index];
-                return _buildBadgeCard(badge, false);
+                return AnimatedBadge(
+                  badge: badge,
+                  isNewlyUnlocked: false,
+                  onTap: () => _showBadgeDetails(badge),
+                );
               },
             ),
         ],
@@ -259,56 +268,101 @@ class _RewardsScreenState extends State<RewardsScreen>
     );
   }
 
-  Widget _buildBadgeCard(badge, bool isUnlocked) {
-    return Card(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          color: isUnlocked 
-              ? AppColors.primary.withOpacity(0.1)
-              : Colors.grey.shade100,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.mediumPadding),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                badge.icon,
-                style: TextStyle(
-                  fontSize: 32,
-                  color: isUnlocked ? AppColors.primary : Colors.grey.shade400,
-                ),
-              ),
-              const SizedBox(height: AppConstants.smallPadding),
-              Text(
+  void _showBadgeDetails(badge) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Text(
+              badge.icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: AppConstants.smallPadding),
+            Expanded(
+              child: Text(
                 badge.name,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isUnlocked ? AppColors.primary : Colors.grey.shade600,
-                ),
-                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: AppConstants.smallPadding),
-              Text(
-                '${badge.requiredPoints} pts',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isUnlocked ? AppColors.primary : Colors.grey.shade500,
-                ),
-              ),
-              if (isUnlocked) ...[
-                const SizedBox(height: AppConstants.smallPadding),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              badge.description,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: AppConstants.mediumPadding),
+            Row(
+              children: [
                 Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 16,
+                  Icons.stars,
+                  color: AppColors.warning,
+                  size: 20,
+                ),
+                const SizedBox(width: AppConstants.smallPadding),
+                Text(
+                  '${badge.requiredPoints} points required',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppConstants.smallPadding),
+            Row(
+              children: [
+                Icon(
+                  Icons.category,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: AppConstants.smallPadding),
+                Text(
+                  badge.category,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            if (badge.isUnlocked && badge.unlockedAt != null) ...[
+              const SizedBox(height: AppConstants.smallPadding),
+              Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: AppColors.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppConstants.smallPadding),
+                  Text(
+                    'Unlocked on ${_formatDate(badge.unlockedAt!)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   Widget _buildEmptyState(String title, String subtitle) {

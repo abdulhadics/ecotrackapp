@@ -33,12 +33,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Habit'),
+        title: const Text('🌱 Plant New Habit'),
         actions: [
           TextButton(
             onPressed: _saveHabit,
             child: const Text(
-              'Save',
+              '🌱 Plant',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -188,7 +188,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _saveHabit,
-                  child: const Text('Add Habit'),
+                  child: const Text('🌱 Plant Habit'),
                 ),
               ),
             ],

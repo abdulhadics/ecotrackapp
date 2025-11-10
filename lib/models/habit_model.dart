@@ -90,9 +90,9 @@ class HabitCategory {
 
   static const Map<String, String> icons = {
     water: '💧',
-    energy: '⚡',
+    energy: '☀️',
     waste: '♻️',
-    transport: '🚶',
+    transport: '🚶‍♀️',
     food: '🥗',
     general: '🌱',
   };

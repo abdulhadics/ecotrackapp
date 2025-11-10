@@ -2,8 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'constants.dart';
 
-/// App theme configuration
+/// App theme configuration with modern glowy effects
 class AppTheme {
+  /// Get glow decoration for cards and buttons
+  static BoxDecoration getGlowDecoration(Color color, {double intensity = 0.3}) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(intensity),
+          blurRadius: 20,
+          spreadRadius: 2,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: color.withOpacity(intensity * 0.5),
+          blurRadius: 40,
+          spreadRadius: 4,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
+  }
+
+  /// Get animated glow decoration
+  static BoxDecoration getAnimatedGlowDecoration(Color color, double animationValue) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(animationValue * 0.4),
+          blurRadius: 20 + (animationValue * 10),
+          spreadRadius: 2 + (animationValue * 2),
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: color.withOpacity(animationValue * 0.2),
+          blurRadius: 40 + (animationValue * 20),
+          spreadRadius: 4 + (animationValue * 4),
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
+  }
+
+  /// Get gradient decoration for special elements
+  static BoxDecoration getGradientDecoration(List<Color> colors) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors,
+      ),
+    );
+  }
   /// Light theme configuration
   static ThemeData get lightTheme {
     return ThemeData(

@@ -115,10 +115,9 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.eco,
-                          size: 60,
-                          color: AppColors.primary,
+                        child: const Text(
+                          '🌱',
+                          style: TextStyle(fontSize: 60),
                         ),
                       ),
                     ),

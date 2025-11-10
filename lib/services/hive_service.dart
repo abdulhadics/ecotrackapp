@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
 
 import '../models/habit_model.dart';
 import '../models/user_model.dart';
@@ -150,8 +148,16 @@ class HiveService extends ChangeNotifier {
   /// Add a new habit
   Future<bool> addHabit(Habit habit) async {
     try {
+      // Check if a habit with the same ID already exists
+      bool habitExists = _habits.any((h) => h.id == habit.id);
+      if (habitExists) {
+        _showError('Habit already exists!');
+        return false;
+      }
+      
       await _habitBox.add(habit);
       await _loadHabits();
+      notifyListeners();
       _showSuccess('Habit added successfully!');
       return true;
     } catch (e) {
@@ -163,10 +169,20 @@ class HiveService extends ChangeNotifier {
   /// Update a habit
   Future<bool> updateHabit(Habit habit) async {
     try {
-      int index = _habits.indexWhere((h) => h.key == habit.key);
+      // Find the habit by its unique ID in the Hive box
+      int index = -1;
+      for (int i = 0; i < _habitBox.length; i++) {
+        Habit? existingHabit = _habitBox.getAt(i);
+        if (existingHabit != null && existingHabit.id == habit.id) {
+          index = i;
+          break;
+        }
+      }
+      
       if (index != -1) {
         await _habitBox.putAt(index, habit);
         await _loadHabits();
+        notifyListeners();
         return true;
       }
       return false;
@@ -194,18 +210,25 @@ class HiveService extends ChangeNotifier {
     if (_currentUser == null) return false;
 
     try {
-      if (habit.isCompleted) return true; // Already completed
+      // Double-check if habit is already completed to prevent duplicates
+      if (habit.isCompleted) {
+        _showSuccess('Habit already completed!');
+        return true;
+      }
 
       // Update habit as completed
       Habit updatedHabit = habit.copyWith(isCompleted: true);
-      await updateHabit(updatedHabit);
+      bool success = await updateHabit(updatedHabit);
+      
+      if (success) {
+        // Update user points
+        int newPoints = _currentUser!.totalPoints + habit.points;
+        await _updateUserPoints(newPoints);
 
-      // Update user points
-      int newPoints = _currentUser!.totalPoints + habit.points;
-      await _updateUserPoints(newPoints);
-
-      _showSuccess('Great job! +${habit.points} eco points!');
-      return true;
+        _showSuccess('Great job! +${habit.points} eco points!');
+        return true;
+      }
+      return false;
     } catch (e) {
       _showError('Failed to complete habit: $e');
       return false;
@@ -365,6 +388,7 @@ class HiveService extends ChangeNotifier {
   }
 
   /// Close all boxes (call this when app is disposed)
+  @override
   Future<void> dispose() async {
     await _userBox.close();
     await _habitBox.close();

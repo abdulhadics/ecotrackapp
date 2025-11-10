@@ -23,10 +23,10 @@ class _HabitListScreenState extends State<HabitListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Habits'),
+        title: const Text('🌿 My Eco Habits'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Text('🌱', style: TextStyle(fontSize: 24)),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const AddHabitScreen()),
             ),
@@ -154,10 +154,9 @@ class _HabitListScreenState extends State<HabitListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.eco,
-            size: 80,
-            color: Colors.grey.shade400,
+          Text(
+            '🌱',
+            style: TextStyle(fontSize: 80),
           ),
           const SizedBox(height: AppConstants.mediumPadding),
           Text(
@@ -168,7 +167,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
           ),
           const SizedBox(height: AppConstants.smallPadding),
           Text(
-            'Add your first eco-friendly habit!',
+            'Plant your first eco-friendly habit! 🌱',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Colors.grey.shade500,
             ),
@@ -178,8 +177,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const AddHabitScreen()),
             ),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Habit'),
+            icon: const Text('🌱'),
+            label: const Text('Plant New Habit'),
           ),
         ],
       ),
