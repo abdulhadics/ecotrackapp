@@ -5,6 +5,7 @@ import '../services/settings_service.dart';
 import '../widgets/magic_mode_widgets.dart';
 import '../widgets/power_mode_widgets.dart';
 import '../services/animation_sound_service.dart';
+import 'database_viewer_screen.dart';
 
 /// Settings Screen with Mode Toggle and Configuration Options
 class SettingsScreen extends StatefulWidget {
@@ -69,6 +70,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
             
             // Reset Settings
+            // Reset Settings
+            _buildDeveloperSection(context),
+            const SizedBox(height: 24),
             _buildResetSection(settingsService),
           ],
         ),
@@ -106,6 +110,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
             
             // Reset Settings
+            // Reset Settings
+            _buildDeveloperSection(context),
+            const SizedBox(height: 24),
             _buildResetSection(settingsService),
           ],
         ),
@@ -545,6 +552,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build Developer Section
+  Widget _buildDeveloperSection(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('👨‍💻', style: TextStyle(fontSize: 20)),
+                const SizedBox(width: 8),
+                Text(
+                  'Developer Options',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DatabaseViewerScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.storage),
+                label: const Text('View Database Content'),
+              ),
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -47,6 +48,14 @@ class HiveService extends ChangeNotifier {
       _userBox = await Hive.openBox<User>('users');
       _habitBox = await Hive.openBox<Habit>('habits');
       _badgeBox = await Hive.openBox<badge_model.Badge>('badges');
+
+      // PRINT THE PATH FOR THE USER
+      if (kIsWeb) {
+        debugPrint('🌐 RUNNING ON WEB: Hive uses IndexedDB (Browser Storage).');
+        debugPrint('   To view data: Open Chrome DevTools (F12) -> Application -> IndexedDB');
+      } else {
+        debugPrint('📦 HIVE DATABASE LOCATION: ${_userBox.path ?? "Unknown (In Memory?)"}');
+      }
 
       // Load data
       await _loadUserData();
