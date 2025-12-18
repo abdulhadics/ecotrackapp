@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/habit_model.dart';
 import '../services/hive_service.dart';
 import '../services/habit_completion_service.dart';
+import '../services/settings_service.dart';
 import '../utils/constants.dart';
 import '../utils/theme.dart';
 
@@ -65,16 +66,21 @@ class _HabitCardState extends State<HabitCard>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_completionAnimation, _glowAnimation]),
-      builder: (context, child) {
-        return Container(
-          decoration: widget.habit.isCompleted
-              ? AppTheme.getAnimatedGlowDecoration(
-                  AppColors.glowGreen,
-                  _glowAnimation.value,
-                )
-              : null,
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final intensity = settings.isMagicMode ? settings.magicModeSettings.animationIntensity : 1.0;
+        
+        return AnimatedBuilder(
+          animation: Listenable.merge([_completionAnimation, _glowAnimation]),
+          builder: (context, child) {
+            return Container(
+              decoration: widget.habit.isCompleted
+                  ? AppTheme.getAnimatedGlowDecoration(
+                      AppColors.glowGreen,
+                      _glowAnimation.value,
+                      intensity: intensity,
+                    )
+                  : null,
           child: Card(
             elevation: widget.habit.isCompleted ? 6 : 2,
             shape: RoundedRectangleBorder(
@@ -268,6 +274,8 @@ class _HabitCardState extends State<HabitCard>
         );
       },
     );
+  },
+);
   }
 
   void _toggleHabit(BuildContext context) async {

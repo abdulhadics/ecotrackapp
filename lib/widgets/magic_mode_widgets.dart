@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import '../services/settings_service.dart';
+import '../models/badge_model.dart' as badge_model;
+import '../services/hive_service.dart';
 
 /// Magic Mode Theme with vibrant, child-friendly colors and animations
 class MagicModeTheme {
@@ -66,52 +70,80 @@ class MagicModeTheme {
     ],
   );
 
-  /// Get Magic Mode theme data
-  static ThemeData get themeData {
+  /// Get Magic Mode theme data based on selected color scheme
+  static ThemeData getThemeData(String scheme) {
+    Color primary;
+    Color secondary;
+    Color accent;
+
+    switch (scheme) {
+      case 'ocean':
+        primary = const Color(0xFF0277BD);
+        secondary = const Color(0xFF039BE5);
+        accent = const Color(0xFF4FC3F7);
+        break;
+      case 'sunset':
+        primary = const Color(0xFFE64A19);
+        secondary = const Color(0xFFF4511E);
+        accent = const Color(0xFFFF8A65);
+        break;
+      case 'rainbow':
+        primary = const Color(0xFF6A1B9A);
+        secondary = const Color(0xFF8E24AA);
+        accent = const Color(0xFFBA68C8);
+        break;
+      case 'nature':
+      default:
+        primary = magicPrimary;
+        secondary = magicSecondary;
+        accent = magicAccent;
+        break;
+    }
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: const ColorScheme.light(
-        primary: magicPrimary,
-        secondary: magicSecondary,
-        tertiary: magicAccent,
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        secondary: secondary,
+        tertiary: accent,
         surface: Colors.white,
-        background: Color(0xFFF8F9FF),
+        background: const Color(0xFFF8F9FF),
         error: magicRed,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onTertiary: Colors.black,
-        onSurface: Color(0xFF2D3748),
-        onBackground: Color(0xFF2D3748),
+        onSurface: const Color(0xFF2D3748),
+        onBackground: const Color(0xFF2D3748),
         onError: Colors.white,
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: magicPrimary,
+          color: primary,
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: magicPrimary,
+          color: primary,
         ),
         headlineSmall: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: magicPrimary,
+          color: primary,
         ),
-        bodyLarge: TextStyle(
+        bodyLarge: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.normal,
           color: Color(0xFF2D3748),
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: Color(0xFF2D3748),
         ),
-        bodySmall: TextStyle(
+        bodySmall: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.normal,
           color: Color(0xFF718096),
@@ -119,10 +151,10 @@ class MagicModeTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: magicPrimary,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 8,
-          shadowColor: magicPrimary.withOpacity(0.3),
+          shadowColor: primary.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -131,7 +163,7 @@ class MagicModeTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 6,
-        shadowColor: magicPrimary.withOpacity(0.2),
+        shadowColor: primary.withOpacity(0.2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -209,6 +241,14 @@ class _MagicStickerState extends State<MagicSticker>
     }
   }
 
+  void _updateAnimationSpeeds(double intensity) {
+    final pulseDuration = Duration(milliseconds: (2000 / (0.5 + intensity * 1.5)).round());
+    if (_pulseController.duration != pulseDuration) {
+      _pulseController.duration = pulseDuration;
+      if (widget.isAnimated) _pulseController.repeat(reverse: true);
+    }
+  }
+
   @override
   void dispose() {
     _bounceController.dispose();
@@ -219,94 +259,110 @@ class _MagicStickerState extends State<MagicSticker>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (widget.onTap != null) {
-          _playSoundEffect();
-          _bounceController.forward().then((_) {
-            _bounceController.reset();
-          });
-          _sparkleController.forward().then((_) {
-            _sparkleController.reset();
-          });
-          widget.onTap!();
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final intensity = settings.magicModeSettings.animationIntensity;
+        if (widget.isAnimated) {
+          _updateAnimationSpeeds(intensity);
         }
-      },
-      child: AnimatedBuilder(
-        animation: Listenable.merge([
-          _bounceAnimation,
-          _pulseAnimation,
-          _sparkleAnimation,
-        ]),
-        builder: (context, child) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // Main sticker with earth-themed glow
-              Transform.scale(
-                scale: widget.isAnimated ? _pulseAnimation.value : 1.0,
-                child: Transform.translate(
-                  offset: Offset(0, -_bounceAnimation.value * 10),
-                  child: Container(
-                    width: widget.size,
-                    height: widget.size,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: widget.showEarthGlow ? MagicModeTheme.earthGradient : null,
-                      boxShadow: [
-                        BoxShadow(
-                          color: MagicModeTheme.magicSuccess.withOpacity(0.4),
-                          blurRadius: 15,
-                          spreadRadius: 3,
+
+        return GestureDetector(
+          onTap: () {
+            if (widget.onTap != null) {
+              _playSoundEffect();
+              
+              // Adjust bounce speed based on intensity
+              _bounceController.duration = Duration(milliseconds: (600 / (0.5 + intensity * 1.5)).round());
+              _bounceController.forward().then((_) {
+                _bounceController.reset();
+              });
+
+              // Adjust sparkle speed based on intensity
+              _sparkleController.duration = Duration(milliseconds: (800 / (0.5 + intensity * 1.5)).round());
+              _sparkleController.forward().then((_) {
+                _sparkleController.reset();
+              });
+              
+              widget.onTap!();
+            }
+          },
+          child: AnimatedBuilder(
+            animation: Listenable.merge([
+              _bounceAnimation,
+              _pulseAnimation,
+              _sparkleAnimation,
+            ]),
+            builder: (context, child) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Main sticker with earth-themed glow
+                  Transform.scale(
+                    scale: widget.isAnimated ? _pulseAnimation.value : 1.0,
+                    child: Transform.translate(
+                      offset: Offset(0, -_bounceAnimation.value * 10),
+                      child: Container(
+                        width: widget.size,
+                        height: widget.size,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: widget.showEarthGlow ? MagicModeTheme.earthGradient : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: MagicModeTheme.magicSuccess.withOpacity(0.4 * intensity.clamp(0.5, 1.0)),
+                              blurRadius: 15 * intensity.clamp(0.5, 1.5),
+                              spreadRadius: 3 * intensity.clamp(0.5, 1.5),
+                            ),
+                            BoxShadow(
+                              color: MagicModeTheme.magicAccent.withOpacity(0.2 * intensity.clamp(0.5, 1.0)),
+                              blurRadius: 25 * intensity.clamp(0.5, 1.5),
+                              spreadRadius: 5 * intensity.clamp(0.5, 1.5),
+                            ),
+                          ],
                         ),
-                        BoxShadow(
-                          color: MagicModeTheme.magicAccent.withOpacity(0.2),
-                          blurRadius: 25,
-                          spreadRadius: 5,
+                        child: Center(
+                          child: Text(
+                            widget.emoji,
+                            style: TextStyle(fontSize: widget.size * 0.6),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        widget.emoji,
-                        style: TextStyle(fontSize: widget.size * 0.6),
                       ),
                     ),
                   ),
-                ),
-              ),
-              
-              // Enhanced Earth-themed sparkle effect
-              if (_sparkleAnimation.value > 0)
-                ...List.generate(8, (index) {
-                  final angle = (index * 45) * (math.pi / 180);
-                  final distance = _sparkleAnimation.value * 40;
-                  final x = math.cos(angle) * distance;
-                  final y = math.sin(angle) * distance;
                   
-                  // Use earth-themed sparkles
-                  final sparkles = ['✨', '🌟', '💫', '🌿', '🍃', '🌱', '⭐', '💚'];
-                  final sparkle = sparkles[index % sparkles.length];
-                  
-                  return Positioned(
-                    left: widget.size / 2 + x - 8,
-                    top: widget.size / 2 + y - 8,
-                    child: Opacity(
-                      opacity: 1 - _sparkleAnimation.value,
-                      child: Transform.scale(
-                        scale: 0.5 + (_sparkleAnimation.value * 0.5),
-                        child: Text(
-                          sparkle,
-                          style: TextStyle(fontSize: 16),
+                  // Enhanced Earth-themed sparkle effect
+                  if (_sparkleAnimation.value > 0)
+                    ...List.generate((8 * intensity * 1.5).round(), (index) {
+                      final angle = (index * (360 / (8 * intensity * 1.5))) * (math.pi / 180);
+                      final distance = _sparkleAnimation.value * 40 * intensity.clamp(0.8, 1.5);
+                      final x = math.cos(angle) * distance;
+                      final y = math.sin(angle) * distance;
+                      
+                      // Use earth-themed sparkles
+                      final sparkles = ['✨', '🌟', '💫', '🌿', '🍃', '🌱', '⭐', '💚'];
+                      final sparkle = sparkles[index % sparkles.length];
+                      
+                      return Positioned(
+                        left: widget.size / 2 + x - 8,
+                        top: widget.size / 2 + y - 8,
+                        child: Opacity(
+                          opacity: (1 - _sparkleAnimation.value) * intensity.clamp(0.5, 1.0),
+                          child: Transform.scale(
+                            scale: 0.5 + (_sparkleAnimation.value * 0.5 * intensity.clamp(0.8, 1.5)),
+                            child: Text(
+                              sparkle,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }),
-            ],
-          );
-        },
-      ),
+                      );
+                    }),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -387,73 +443,81 @@ class _MagicButtonState extends State<MagicButton>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_pressAnimation, _glowAnimation]),
-      builder: (context, child) {
-        return GestureDetector(
-          onTapDown: widget.isEnabled ? (_) => _pressController.forward() : null,
-          onTapUp: widget.isEnabled ? (_) {
-            _pressController.reverse();
-            if (widget.onPressed != null) {
-              HapticFeedback.mediumImpact();
-              widget.onPressed!();
-            }
-          } : null,
-          onTapCancel: widget.isEnabled ? () => _pressController.reverse() : null,
-          child: Transform.scale(
-            scale: _pressAnimation.value,
-            child: Container(
-              width: widget.width,
-              height: widget.height ?? 56,
-              decoration: BoxDecoration(
-                gradient: widget.backgroundColor != null 
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          widget.backgroundColor!,
-                          widget.backgroundColor!.withOpacity(0.8),
-                        ],
-                      )
-                    : MagicModeTheme.earthGradient,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: MagicModeTheme.magicSuccess.withOpacity(_glowAnimation.value),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                  BoxShadow(
-                    color: MagicModeTheme.magicAccent.withOpacity(_glowAnimation.value * 0.5),
-                    blurRadius: 40,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.emoji != null) ...[
-                      Text(
-                        widget.emoji!,
-                        style: TextStyle(fontSize: 20),
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final intensity = settings.isMagicMode ? settings.magicModeSettings.animationIntensity : 1.0;
+        
+        return AnimatedBuilder(
+          animation: Listenable.merge([_pressAnimation, _glowAnimation]),
+          builder: (context, child) {
+            return GestureDetector(
+              onTapDown: widget.isEnabled ? (_) => _pressController.forward() : null,
+              onTapUp: widget.isEnabled ? (_) {
+                _pressController.reverse();
+                if (widget.onPressed != null) {
+                  HapticFeedback.mediumImpact();
+                  widget.onPressed!();
+                }
+              } : null,
+              onTapCancel: widget.isEnabled ? () => _pressController.reverse() : null,
+              child: Transform.scale(
+                scale: _pressAnimation.value,
+                child: Container(
+                  width: widget.width,
+                  height: widget.height ?? 56,
+                  decoration: BoxDecoration(
+                    gradient: widget.backgroundColor != null 
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              widget.backgroundColor!,
+                              widget.backgroundColor!.withOpacity(0.8),
+                            ],
+                          )
+                        : MagicModeTheme.earthGradient,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (widget.backgroundColor ?? MagicModeTheme.magicSuccess)
+                            .withOpacity(_glowAnimation.value * intensity.clamp(0.5, 1.0)),
+                        blurRadius: 20 * intensity.clamp(0.8, 1.5),
+                        spreadRadius: 2 * intensity.clamp(0.8, 1.5),
                       ),
-                      const SizedBox(width: 8),
+                      BoxShadow(
+                        color: (widget.backgroundColor ?? MagicModeTheme.magicAccent)
+                            .withOpacity(_glowAnimation.value * 0.5 * intensity.clamp(0.5, 1.0)),
+                        blurRadius: 40 * intensity.clamp(0.8, 1.5),
+                        spreadRadius: 4 * intensity.clamp(0.8, 1.5),
+                      ),
                     ],
-                    Text(
-                      widget.text,
-                      style: TextStyle(
-                        color: widget.textColor ?? Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.emoji != null) ...[
+                          Text(
+                            widget.emoji!,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          widget.text,
+                          style: TextStyle(
+                            color: widget.textColor ?? Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -835,6 +899,250 @@ class _MagicFABState extends State<MagicFAB>
           ),
         );
       },
+    );
+  }
+}
+
+class BadgeRevokedDialog extends StatelessWidget {
+  final badge_model.Badge badge;
+  final String wittyComment;
+
+  const BadgeRevokedDialog({
+    super.key,
+    required this.badge,
+    required this.wittyComment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: _contentBox(context),
+    );
+  }
+
+  Widget _contentBox(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.only(left: 20, top: 65, right: 20, bottom: 20),
+          margin: const EdgeInsets.only(top: 45),
+          decoration: BoxDecoration(
+            shape: BoxShape.rectangle,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.2), offset: const Offset(0, 10), blurRadius: 20),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Text(
+                'Badge Revoked!',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: MagicModeTheme.magicRed),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                wittyComment,
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                   color: Colors.grey.withOpacity(0.1),
+                   borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                   children: [
+                      Text(badge.icon, style: const TextStyle(fontSize: 48)),
+                      const SizedBox(height: 8),
+                      Text(badge.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                   ],
+                ),
+              ),
+              const SizedBox(height: 22),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MagicModeTheme.magicRed,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('I will do better!', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 20,
+          right: 20,
+          child: CircleAvatar(
+            backgroundColor: Colors.transparent,
+            radius: 45,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.all(Radius.circular(45)),
+              child: Container(
+                color: MagicModeTheme.magicRed,
+                child: const Center(
+                  child: Text('😢', style: TextStyle(fontSize: 44)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class BadgeAchievedDialog extends StatelessWidget {
+  final badge_model.Badge badge;
+  final String celebratoryMessage;
+
+  const BadgeAchievedDialog({
+    super.key,
+    required this.badge,
+    required this.celebratoryMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: _contentBox(context),
+    );
+  }
+
+  Widget _contentBox(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.only(left: 20, top: 65, right: 20, bottom: 20),
+          margin: const EdgeInsets.only(top: 45),
+          decoration: BoxDecoration(
+            shape: BoxShape.rectangle,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: MagicModeTheme.magicGold.withOpacity(0.3),
+                offset: const Offset(0, 10),
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Text(
+                'New Badge Unlocked!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: MagicModeTheme.magicPrimary,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                celebratoryMessage,
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      MagicModeTheme.magicGold.withOpacity(0.1),
+                      MagicModeTheme.magicSecondary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: MagicModeTheme.magicGold.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      badge.icon,
+                      style: const TextStyle(fontSize: 56),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      badge.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: MagicModeTheme.magicPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      badge.description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                'You earned ${badge.requiredPoints} points to get here! 🌟',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: MagicModeTheme.magicGold.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 22),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MagicModeTheme.magicPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text(
+                    'Stay Eco-Awesome!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 20,
+          right: 20,
+          child: CircleAvatar(
+            backgroundColor: Colors.transparent,
+            radius: 45,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.all(Radius.circular(45)),
+              child: Container(
+                color: MagicModeTheme.magicGold,
+                child: const Center(
+                  child: Text('🎉', style: TextStyle(fontSize: 44)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

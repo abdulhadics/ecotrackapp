@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'dart:math' as math;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import '../models/habit_model.dart';
 import '../models/user_model.dart';
 import '../models/badge_model.dart' as badge_model;
+import '../widgets/magic_mode_widgets.dart';
 
 /// Hive service for local data management
 /// Handles user data, habits, and badges using Hive local storage
@@ -13,6 +17,27 @@ class HiveService extends ChangeNotifier {
   late Box<User> _userBox;
   late Box<Habit> _habitBox;
   late Box<badge_model.Badge> _badgeBox;
+
+  final List<String> _wittyRevokeComments = [
+    "Oops! You deleted that habit and now your score is crying. 😢 This badge is going back to the eco-vault until you earn it back!",
+    "The planet is slightly more disappointed now. 🌍 Badge revoked! Time to pick up the pace!",
+    "Wait, did you just delete your progress? That badge was allergic to laziness anyway. 🤧 Gone!",
+    "Recalculating... and... poof! 🪄 Your badge has vanished. Maybe try a 'Don't delete habits' habit?",
+  ];
+
+  final List<String> _celebratoryAchieveComments = [
+    "You're a planet-saving legend! 🌍 This badge belongs in your trophy cabinet. Keep that momentum going!",
+    "Eco-Magic at work! ✨ You've just unlocked a new piece of history. The Earth is high-fiving you right now!",
+    "Look at you go! 🚀 Another milestone crushed. You're making the world a better place, one habit at a time!",
+    "BOOM! 💥 New badge alert! You're officially a force of nature. What's next on your green list?",
+  ];
+
+  // EmailJS Constants (To be updated by user)
+  final String _emailServiceId = 'service_vn9iw5l';
+  final String _emailTemplateId = 'template_p5fo1op';
+  final String _emailPublicKey = 'S5TzlRF0HG-EcFcwx';
+  final String _emailPrivateKey = ''; // Provide this if using Strict Mode
+
   
   User? _currentUser;
   List<Habit> _habits = [];
@@ -101,7 +126,7 @@ class HiveService extends ChangeNotifier {
       joinDate: DateTime.now(),
       ecoGoal: 'Make the world greener!',
       badges: {},
-      isDarkMode: false,
+      isEmailVerified: false,
     );
 
     await _userBox.add(defaultUser);
@@ -125,6 +150,15 @@ class HiveService extends ChangeNotifier {
         // Initialize with default badges
         for (badge_model.Badge badge in badge_model.BadgeDefinitions.allBadges) {
           await _badgeBox.add(badge);
+        }
+      } else {
+        // Sync missing badges
+        final existingIds = _badgeBox.values.map((b) => b.id).toSet();
+        for (badge_model.Badge badge in badge_model.BadgeDefinitions.allBadges) {
+          if (!existingIds.contains(badge.id)) {
+            await _badgeBox.add(badge);
+            debugPrint('➕ Added new badge to storage: ${badge.name}');
+          }
         }
       }
       _badges = _badgeBox.values.toList();
@@ -201,11 +235,21 @@ class HiveService extends ChangeNotifier {
     }
   }
 
-  /// Delete a habit
-  Future<bool> deleteHabit(Habit habit) async {
+  /// Delete a habit with context for potential badge revocation dialogs
+  Future<bool> deleteHabit(Habit habit, [BuildContext? context]) async {
     try {
+      bool wasCompleted = habit.isCompleted;
+      int habitPoints = habit.points;
+      
       await habit.delete();
       await _loadHabits();
+      
+      if (wasCompleted && _currentUser != null) {
+        int newPoints = _currentUser!.totalPoints - habitPoints;
+        if (newPoints < 0) newPoints = 0;
+        await _updateUserPoints(newPoints, context);
+      }
+      
       _showSuccess('Habit deleted successfully!');
       return true;
     } catch (e) {
@@ -215,7 +259,7 @@ class HiveService extends ChangeNotifier {
   }
 
   /// Mark habit as completed and update points
-  Future<bool> completeHabit(Habit habit) async {
+  Future<bool> completeHabit(Habit habit, [BuildContext? context]) async {
     if (_currentUser == null) return false;
 
     try {
@@ -232,7 +276,7 @@ class HiveService extends ChangeNotifier {
       if (success) {
         // Update user points
         int newPoints = _currentUser!.totalPoints + habit.points;
-        await _updateUserPoints(newPoints);
+        await _updateUserPoints(newPoints, context);
 
         _showSuccess('Great job! +${habit.points} eco points!');
         return true;
@@ -244,8 +288,8 @@ class HiveService extends ChangeNotifier {
     }
   }
 
-  /// Update user points and check for new badges
-  Future<void> _updateUserPoints(int newPoints) async {
+  /// Update user points and check for new/revoked badges
+  Future<void> _updateUserPoints(int newPoints, [BuildContext? context]) async {
     if (_currentUser == null) return;
 
     try {
@@ -259,7 +303,17 @@ class HiveService extends ChangeNotifier {
       );
 
       if (newBadges.isNotEmpty) {
-        await _unlockBadges(newBadges);
+        await _unlockBadges(newBadges, context);
+      }
+      
+      // Check for revoked badges
+      List<badge_model.Badge> revokedBadges = badge_model.BadgeDefinitions.checkForRevokedBadges(
+        newPoints,
+        _badges,
+      );
+      
+      if (revokedBadges.isNotEmpty) {
+        await _revokeBadges(revokedBadges, context);
       }
     } catch (e) {
       _showError('Failed to update points: $e');
@@ -267,7 +321,7 @@ class HiveService extends ChangeNotifier {
   }
 
   /// Unlock new badges
-  Future<void> _unlockBadges(List<badge_model.Badge> newBadges) async {
+  Future<void> _unlockBadges(List<badge_model.Badge> newBadges, [BuildContext? context]) async {
     if (_currentUser == null) return;
 
     try {
@@ -282,6 +336,18 @@ class HiveService extends ChangeNotifier {
           badge_model.Badge updatedBadge = badge.copyWith(isUnlocked: true, unlockedAt: DateTime.now());
           await _badgeBox.putAt(index, updatedBadge);
         }
+
+        // Show achievement dialog if context is available
+        if (context != null) {
+          final celebratoryMessage = _celebratoryAchieveComments[math.Random().nextInt(_celebratoryAchieveComments.length)];
+          showDialog(
+            context: context,
+            builder: (context) => BadgeAchievedDialog(
+              badge: badge,
+              celebratoryMessage: celebratoryMessage,
+            ),
+          );
+        }
       }
 
       // Update user badges
@@ -291,12 +357,57 @@ class HiveService extends ChangeNotifier {
       // Reload badges
       await _loadBadges();
 
-      // Show celebration for new badges
+      // Show toast as backup or for non-UI contexts
       for (badge_model.Badge badge in newBadges) {
-        _showSuccess('🎉 New badge unlocked: ${badge.name}!');
+        if (context == null) {
+          _showSuccess('🎉 New badge unlocked: ${badge.name}!');
+        }
       }
     } catch (e) {
       _showError('Failed to unlock badges: $e');
+    }
+  }
+
+  /// Revoke badges
+  Future<void> _revokeBadges(List<badge_model.Badge> revokedBadges, [BuildContext? context]) async {
+    if (_currentUser == null) return;
+
+    try {
+      Map<String, bool> updatedBadges = Map.from(_currentUser!.badges);
+      
+      for (badge_model.Badge badge in revokedBadges) {
+        updatedBadges[badge.id] = false;
+        
+        // Update badge in Hive
+        int index = _badges.indexWhere((b) => b.id == badge.id);
+        if (index != -1) {
+          badge_model.Badge updatedBadge = badge.copyWith(isUnlocked: false, unlockedAt: null);
+          await _badgeBox.putAt(index, updatedBadge);
+        }
+        
+        // Show witty dialog if context is available
+        if (context != null) {
+          final wittyComment = _wittyRevokeComments[math.Random().nextInt(_wittyRevokeComments.length)];
+          showDialog(
+            context: context,
+            builder: (context) => BadgeRevokedDialog(
+              badge: badge,
+              wittyComment: wittyComment,
+            ),
+          );
+        }
+      }
+
+      // Update user badges
+      User updatedUser = _currentUser!.copyWith(badges: updatedBadges);
+      await updateUser(updatedUser);
+      
+      // Reload badges
+      await _loadBadges();
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error revoking badges: $e');
     }
   }
 
@@ -366,12 +477,103 @@ class HiveService extends ChangeNotifier {
     return _badges.where((badge) => badge.category == category).toList();
   }
 
-  /// Toggle dark mode
-  Future<void> toggleDarkMode() async {
+  /// Set email as verified
+  Future<void> setEmailVerified() async {
     if (_currentUser == null) return;
-
-    User updatedUser = _currentUser!.copyWith(isDarkMode: !_currentUser!.isDarkMode);
+    User updatedUser = _currentUser!.copyWith(isEmailVerified: true);
     await updateUser(updatedUser);
+    _showSuccess('Email verified successfully! 🎉');
+  }
+
+  /// Send verification OTP using EmailJS
+  Future<String> sendVerificationOTP() async {
+    final random = math.Random();
+    final otp = (100000 + random.nextInt(900000)).toString();
+    final userEmail = _currentUser?.email ?? '';
+
+    if (userEmail.isEmpty) {
+      _showError('No email found for user!');
+      return otp;
+    }
+
+    // EmailJS Credentials from class constants
+    final String serviceId = _emailServiceId;
+    final String publicKey = _emailPublicKey; 
+    final String templateId = _emailTemplateId; 
+    final String accessToken = _emailPrivateKey;
+
+    debugPrint('🛠 DEBUG: Sending email using Service: $serviceId, Template: $templateId');
+
+    try {
+      final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+      
+      // Calculate expiry time (15 mins from now)
+      final expiryTime = DateTime.now().add(const Duration(minutes: 15));
+      final timeString = "${expiryTime.hour.toString().padLeft(2, '0')}:${expiryTime.minute.toString().padLeft(2, '0')}";
+
+      final Map<String, dynamic> body = {
+        'lib_version': '3.2.0',
+        'service_id': serviceId,
+        'template_id': templateId,
+        'user_id': publicKey,
+        'template_params': {
+          'email': userEmail,      
+          'passcode': otp,       
+          'otp_code': otp,       
+          'time': timeString,    
+        },
+      };
+
+      // Add private key if provided
+      if (accessToken.isNotEmpty) {
+        body['accessToken'] = accessToken;
+      }
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ Real Email Sent SUCCESSFULLY to $userEmail: $otp');
+        _showSuccess('Verification code sent to your email!');
+      } else {
+        // This will tell us EXACTLY why EmailJS is rejecting it
+        debugPrint('❌ EmailJS API REJECTED: Status ${response.statusCode}');
+        debugPrint('❌ Error Details: ${response.body}');
+        debugPrint('📧 Fallback Code (check this while fixing): $otp');
+        
+        // Show backup code in a long toast (approx 3.5 seconds)
+        Fluttertoast.showToast(
+          msg: "Backup Verification Code: $otp",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.TOP,
+          backgroundColor: Colors.orange.shade800,
+          textColor: Colors.white,
+          fontSize: 16.0
+        );
+        
+        _showError('Email failed (Status ${response.statusCode}). Using backup code.');
+      }
+    } catch (e) {
+      debugPrint('❌ NETWORK ERROR: $e');
+      debugPrint('📧 Fallback Code: $otp');
+      
+      // Show backup code in a long toast (approx 3.5 seconds)
+      Fluttertoast.showToast(
+        msg: "Backup Verification Code: $otp",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP,
+        backgroundColor: Colors.orange.shade800,
+        textColor: Colors.white,
+        fontSize: 16.0
+      );
+      
+      _showError('Connection error. Using backup code.');
+    }
+
+    return otp;
   }
 
   /// Show success message

@@ -5,6 +5,7 @@ import '../services/hive_service.dart';
 import '../models/habit_model.dart';
 import '../services/notification_service.dart';
 import '../services/settings_service.dart';
+import '../services/animation_sound_service.dart';
 import '../utils/constants.dart';
 import '../widgets/dynamic_habit_list.dart';
 import '../widgets/magic_mode_widgets.dart';
@@ -42,7 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<SettingsService>(
       builder: (context, settingsService, child) {
-    return Scaffold(
+        // Handle Magic Mode background music
+        if (settingsService.isMagicMode) {
+          MusicService().updateMusic(
+            settingsService.magicModeSettings.backgroundMusic,
+            settingsService.soundEnabled,
+          );
+        } else {
+          MusicService().stop();
+        }
+
+        return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,

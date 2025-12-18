@@ -27,7 +27,7 @@ class UserAdapter extends TypeAdapter<User> {
       joinDate: fields[7] as DateTime,
       ecoGoal: fields[8] as String,
       badges: (fields[9] as Map).cast<String, bool>(),
-      isDarkMode: fields[10] as bool,
+      isEmailVerified: fields[10] as bool,
     );
   }
 
@@ -56,7 +56,7 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(9)
       ..write(obj.badges)
       ..writeByte(10)
-      ..write(obj.isDarkMode);
+      ..write(obj.isEmailVerified);
   }
 
   @override

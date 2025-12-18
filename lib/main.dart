@@ -54,7 +54,7 @@ class EcoTrackApp extends StatelessWidget {
             title: AppConstants.appName,
             debugShowCheckedModeBanner: false,
             theme: settings.isMagicMode 
-                ? MagicModeTheme.themeData 
+                ? MagicModeTheme.getThemeData(settings.magicModeSettings.colorScheme)
                 : PowerModeTheme.themeData,
             home: const SplashScreen(),
           );

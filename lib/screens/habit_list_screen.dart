@@ -56,7 +56,43 @@ class _HabitListScreenState extends State<HabitListScreen> {
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: AppConstants.smallPadding),
-                            child: HabitCard(habit: habits[index]),
+                            child: Dismissible(
+                              key: Key('list_dismiss_${habits[index].id}'),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade400,
+                                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                                ),
+                                child: const Icon(Icons.delete, color: Colors.white),
+                              ),
+                              confirmDismiss: (direction) async {
+                                return await showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Delete Habit?'),
+                                    content: const Text('Are you sure you want to delete this habit?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              onDismissed: (direction) {
+                                hiveService.deleteHabit(habits[index], context);
+                              },
+                              child: HabitCard(habit: habits[index]),
+                            ),
                           );
                         },
                       ),

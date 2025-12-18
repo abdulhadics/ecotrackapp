@@ -662,27 +662,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: currentValue,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem(
-              value: option,
-              child: Text(option),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = currentValue == option;
+            return GestureDetector(
+              onTap: () {
+                SoundService().playButtonTap();
+                onChanged(option);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? MagicModeTheme.magicPrimary 
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected 
+                        ? MagicModeTheme.magicPrimary 
+                        : Colors.grey.shade300,
+                  ),
+                  boxShadow: isSelected ? [
+                    BoxShadow(
+                      color: MagicModeTheme.magicPrimary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ] : [],
+                ),
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
             );
           }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              SoundService().playButtonTap();
-              onChanged(value);
-            }
-          },
         ),
       ],
     );

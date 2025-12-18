@@ -26,20 +26,21 @@ class AppTheme {
   }
 
   /// Get animated glow decoration
-  static BoxDecoration getAnimatedGlowDecoration(Color color, double animationValue) {
+  static BoxDecoration getAnimatedGlowDecoration(Color color, double animationValue, {double intensity = 1.0}) {
+    final effectiveIntensity = intensity.clamp(0.5, 2.0);
     return BoxDecoration(
       borderRadius: BorderRadius.circular(AppConstants.borderRadius),
       boxShadow: [
         BoxShadow(
-          color: color.withOpacity(animationValue * 0.4),
-          blurRadius: 20 + (animationValue * 10),
-          spreadRadius: 2 + (animationValue * 2),
+          color: color.withOpacity(animationValue * 0.4 * intensity.clamp(0.8, 1.0)),
+          blurRadius: (20 + (animationValue * 10)) * effectiveIntensity,
+          spreadRadius: (2 + (animationValue * 2)) * effectiveIntensity,
           offset: const Offset(0, 4),
         ),
         BoxShadow(
-          color: color.withOpacity(animationValue * 0.2),
-          blurRadius: 40 + (animationValue * 20),
-          spreadRadius: 4 + (animationValue * 4),
+          color: color.withOpacity(animationValue * 0.2 * intensity.clamp(0.8, 1.0)),
+          blurRadius: (40 + (animationValue * 20)) * effectiveIntensity,
+          spreadRadius: (4 + (animationValue * 4)) * effectiveIntensity,
           offset: const Offset(0, 8),
         ),
       ],
