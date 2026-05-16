@@ -5,6 +5,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../models/habit_model.dart';
 import '../models/user_model.dart';
 import '../models/badge_model.dart' as badge_model;
+import '../models/eco_action.dart';
+import 'context_aware_sync_service.dart';
 
 /// Hive service for local data management
 /// Handles user data, habits, and badges using Hive local storage
@@ -12,6 +14,8 @@ class HiveService extends ChangeNotifier {
   late Box<User> _userBox;
   late Box<Habit> _habitBox;
   late Box<badge_model.Badge> _badgeBox;
+  late Box<EcoAction> _ecoActionBox;
+  late ContextAwareSyncService _syncService;
   
   User? _currentUser;
   List<Habit> _habits = [];
@@ -26,6 +30,7 @@ class HiveService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
   bool get isAuthenticated => _currentUser != null;
+  ContextAwareSyncService get syncService => _syncService;
 
   /// Initialize Hive boxes
   Future<void> initialize() async {
@@ -42,11 +47,18 @@ class HiveService extends ChangeNotifier {
       Hive.registerAdapter(UserAdapter());
       Hive.registerAdapter(HabitAdapter());
       Hive.registerAdapter(badge_model.BadgeAdapter());
+      Hive.registerAdapter(EcoActionAdapter());
 
       // Open boxes
       _userBox = await Hive.openBox<User>('users');
       _habitBox = await Hive.openBox<Habit>('habits');
+
       _badgeBox = await Hive.openBox<badge_model.Badge>('badges');
+      _ecoActionBox = await Hive.openBox<EcoAction>('eco_actions');
+
+      // Initialize Sync Service
+      _syncService = ContextAwareSyncService(_ecoActionBox);
+      _syncService.init();
 
       // Load data
       await _loadUserData();
@@ -393,6 +405,8 @@ class HiveService extends ChangeNotifier {
     await _userBox.close();
     await _habitBox.close();
     await _badgeBox.close();
+    await _ecoActionBox.close();
+    _syncService.dispose();
     super.dispose();
   }
 }

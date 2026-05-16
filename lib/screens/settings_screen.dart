@@ -5,6 +5,7 @@ import '../services/settings_service.dart';
 import '../widgets/magic_mode_widgets.dart';
 import '../widgets/power_mode_widgets.dart';
 import '../services/animation_sound_service.dart';
+import 'research_dashboard.dart';
 
 /// Settings Screen with Mode Toggle and Configuration Options
 class SettingsScreen extends StatefulWidget {
@@ -475,6 +476,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
             
             // Reminder Hours
             _buildReminderHours(settingsService),
+
+            const SizedBox(height: 16),
+
+            // Research Dashboard (Developer Option)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ResearchDashboard()),
+                  );
+                },
+                icon: const Icon(Icons.science),
+                label: const Text('Open Research Dashboard'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
           ],
         ),
       ),

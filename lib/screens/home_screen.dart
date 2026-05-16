@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/hive_service.dart';
 import '../models/habit_model.dart';
@@ -228,69 +229,93 @@ class _DashboardTabState extends State<DashboardTab> {
                 : null,
             child: settingsService.isMagicMode
                 ? EarthFloatingElements(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(AppConstants.mediumPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Points Badge
-                          _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.all(AppConstants.mediumPadding),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Points Badge
+                              _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
 
-                          const SizedBox(height: AppConstants.largePadding),
+                              const SizedBox(height: AppConstants.largePadding),
 
-                          // Today's Progress
-                          _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
+                              // Algorithmics Card (NEW: Research Layer)
+                              const AlgorithmicsCard(),
 
-                          const SizedBox(height: AppConstants.largePadding),
+                              const SizedBox(height: AppConstants.largePadding),
 
-                          // Quick Actions
-                          _buildQuickActions(context, settingsService),
+                              // Today's Progress
+                              _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
 
-                          const SizedBox(height: AppConstants.largePadding),
+                              const SizedBox(height: AppConstants.largePadding),
 
-                          // Recent Habits
-                          _buildRecentHabits(context, settingsService, todaysHabits),
+                              // Quick Actions
+                              _buildQuickActions(context, settingsService),
 
-                          const SizedBox(height: AppConstants.largePadding),
+                              const SizedBox(height: AppConstants.largePadding),
 
-                          // Eco Tip or Analytics (based on mode)
-                          settingsService.isMagicMode
-                              ? _buildEcoTip(context)
-                              : _buildAnalytics(context, settingsService, hiveService),
-                        ],
+                              // Recent Habits
+                              _buildRecentHabits(context, settingsService, todaysHabits),
+
+                              const SizedBox(height: AppConstants.largePadding),
+
+                              // Eco Tip
+                              _buildEcoTip(context),
+                              
+                              const SizedBox(height: 100), // Bottom padding for FAB
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   )
-                : SingleChildScrollView(
-            padding: const EdgeInsets.all(AppConstants.mediumPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Points Badge
-                        _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
+                : Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(AppConstants.mediumPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Points Badge
+                            _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
 
-                const SizedBox(height: AppConstants.largePadding),
+                            const SizedBox(height: AppConstants.largePadding),
 
-                // Today's Progress
-                        _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
+                            // Algorithmics Card
+                            const AlgorithmicsCard(),
 
-                const SizedBox(height: AppConstants.largePadding),
+                            const SizedBox(height: AppConstants.largePadding),
 
-                // Quick Actions
-                        _buildQuickActions(context, settingsService),
+                            // Today's Progress
+                            _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
 
-                const SizedBox(height: AppConstants.largePadding),
+                            const SizedBox(height: AppConstants.largePadding),
 
-                // Recent Habits
-                        _buildRecentHabits(context, settingsService, todaysHabits),
+                            // Quick Actions
+                            _buildQuickActions(context, settingsService),
 
-                const SizedBox(height: AppConstants.largePadding),
+                            const SizedBox(height: AppConstants.largePadding),
 
-                        // Analytics for Power Mode
-                        _buildAnalytics(context, settingsService, hiveService),
-              ],
+                            // Recent Habits
+                            _buildRecentHabits(context, settingsService, todaysHabits),
+
+                            const SizedBox(height: AppConstants.largePadding),
+
+                            // Analytics for Power Mode
+                            _buildAnalytics(context, settingsService, hiveService),
+                            
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
                     ),
-            ),
+                  ),
           ),
         );
       },
@@ -298,12 +323,31 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   PreferredSizeWidget _buildAppBar(SettingsService settingsService, String userName) {
+    final Uri dashboardUri = Uri.parse('https://supabase.com/dashboard'); // Placeholder for B2B portal
+
     if (settingsService.isMagicMode) {
       return AppBar(
-        title: Text('🌿 Welcome back, $userName!'),
+        title: Text('🌿 Welcome, $userName!'),
         backgroundColor: MagicModeTheme.magicBackground.colors.first,
         elevation: 0,
         actions: [
+          // Open Web Dashboard Button
+          IconButton(
+            tooltip: 'Open Web Dashboard',
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.open_in_new_rounded, color: Colors.blueAccent, size: 20),
+            ),
+            onPressed: () async {
+              if (await canLaunchUrl(dashboardUri)) {
+                await launchUrl(dashboardUri, mode: LaunchMode.externalApplication);
+              }
+            },
+          ),
           IconButton(
             icon: const Text('🎨', style: TextStyle(fontSize: 20)),
             onPressed: () {
@@ -314,11 +358,20 @@ class _DashboardTabState extends State<DashboardTab> {
       );
     } else {
       return AppBar(
-        title: Text('Welcome back, $userName'),
+        title: Text('Welcome, $userName'),
         backgroundColor: PowerModeTheme.powerPrimary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              if (await canLaunchUrl(dashboardUri)) {
+                await launchUrl(dashboardUri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.open_in_new, color: Colors.white, size: 18),
+            label: const Text('DASHBOARD', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {

@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import '../services/hive_service.dart';
 import '../utils/constants.dart';
 import 'home_screen.dart';
+import 'research_dashboard.dart';
 
 /// Splash screen with Lottie animation
 /// Shows app logo and initializes the app
