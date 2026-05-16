@@ -244,7 +244,7 @@ class _DashboardTabState extends State<DashboardTab> {
                               const SizedBox(height: AppConstants.largePadding),
 
                               // Algorithmics Card (NEW: Research Layer)
-                              const AlgorithmicsCard(),
+                              AlgorithmicsCard(),
 
                               const SizedBox(height: AppConstants.largePadding),
 
@@ -288,7 +288,7 @@ class _DashboardTabState extends State<DashboardTab> {
                             const SizedBox(height: AppConstants.largePadding),
 
                             // Algorithmics Card
-                            const AlgorithmicsCard(),
+                            AlgorithmicsCard(),
 
                             const SizedBox(height: AppConstants.largePadding),
 
