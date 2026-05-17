@@ -130,7 +130,7 @@ class _RewardsScreenState extends State<RewardsScreen>
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 1.2,
+                childAspectRatio: 0.65,
                 crossAxisSpacing: AppConstants.mediumPadding,
                 mainAxisSpacing: AppConstants.mediumPadding,
               ),
@@ -178,7 +178,7 @@ class _RewardsScreenState extends State<RewardsScreen>
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 1.2,
+                childAspectRatio: 0.65,
                 crossAxisSpacing: AppConstants.mediumPadding,
                 mainAxisSpacing: AppConstants.mediumPadding,
               ),

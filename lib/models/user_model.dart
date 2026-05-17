@@ -37,7 +37,7 @@ class User extends HiveObject {
   final Map<String, bool> badges;
   
   @HiveField(10)
-  final bool isDarkMode;
+  final bool isEmailVerified;
 
   User({
     required this.id,
@@ -50,7 +50,7 @@ class User extends HiveObject {
     required this.joinDate,
     required this.ecoGoal,
     required this.badges,
-    required this.isDarkMode,
+    required this.isEmailVerified,
   });
 
   /// Create a copy of the user with updated fields
@@ -65,7 +65,7 @@ class User extends HiveObject {
     DateTime? joinDate,
     String? ecoGoal,
     Map<String, bool>? badges,
-    bool? isDarkMode,
+    bool? isEmailVerified,
   }) {
     return User(
       id: id ?? this.id,
@@ -78,7 +78,7 @@ class User extends HiveObject {
       joinDate: joinDate ?? this.joinDate,
       ecoGoal: ecoGoal ?? this.ecoGoal,
       badges: badges ?? this.badges,
-      isDarkMode: isDarkMode ?? this.isDarkMode,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
     );
   }
 

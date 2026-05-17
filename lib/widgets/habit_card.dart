@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/habit_model.dart';
 import '../services/hive_service.dart';
 import '../services/habit_completion_service.dart';
+import '../services/settings_service.dart';
 import '../utils/constants.dart';
 import '../utils/theme.dart';
 
@@ -285,6 +286,8 @@ class _HabitCardState extends State<HabitCard>
         );
       },
     );
+  },
+);
   }
 
   void _toggleHabit(BuildContext context) async {

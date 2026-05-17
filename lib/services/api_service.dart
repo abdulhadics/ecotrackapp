@@ -235,14 +235,14 @@ class ApiService {
     String? name,
     String? avatar,
     String? ecoGoal,
-    bool? isDarkMode,
+    bool? isEmailVerified,
     String? preferredMode, // 'magic' or 'power'
   }) async {
     final body = <String, dynamic>{};
     if (name != null) body['name'] = name;
     if (avatar != null) body['avatar'] = avatar;
     if (ecoGoal != null) body['eco_goal'] = ecoGoal;
-    if (isDarkMode != null) body['is_dark_mode'] = isDarkMode;
+    if (isEmailVerified != null) body['is_email_verified'] = isEmailVerified;
     if (preferredMode != null) body['preferred_mode'] = preferredMode;
 
     return _makeRequest<UserData>(
@@ -485,7 +485,7 @@ class UserData {
   final DateTime joinDate;
   final String ecoGoal;
   final String preferredMode; // 'magic' or 'power'
-  final bool isDarkMode;
+  final bool isEmailVerified;
 
   UserData({
     required this.id,
@@ -498,7 +498,7 @@ class UserData {
     required this.joinDate,
     required this.ecoGoal,
     required this.preferredMode,
-    required this.isDarkMode,
+    required this.isEmailVerified,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -513,7 +513,7 @@ class UserData {
       joinDate: DateTime.parse(json['join_date']),
       ecoGoal: json['eco_goal'] ?? 'Make the world greener!',
       preferredMode: json['preferred_mode'] ?? 'magic',
-      isDarkMode: json['is_dark_mode'] ?? false,
+      isEmailVerified: json['is_email_verified'] ?? false,
     );
   }
 }

@@ -21,7 +21,7 @@ class HabitCompletionService {
     HapticFeedback.mediumImpact();
     
     // Complete the habit
-    hiveService.completeHabit(habit);
+    hiveService.completeHabit(habit, context);
     
     // After completion, use HiveService's own badge logic and user state
     final user = hiveService.currentUser;

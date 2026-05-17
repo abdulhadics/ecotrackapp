@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import 'settings_service.dart';
 
 /// Comprehensive Animation Service for Magic Mode
 class AnimationService {
@@ -8,11 +10,19 @@ class AnimationService {
   factory AnimationService() => _instance;
   AnimationService._internal();
 
+  static double _getIntensity(BuildContext context) {
+    try {
+      return Provider.of<SettingsService>(context, listen: false).magicModeSettings.animationIntensity;
+    } catch (_) {
+      return 0.8;
+    }
+  }
+
   /// Play sparkle animation
   static void playSparkleAnimation(
     BuildContext context,
     GlobalKey widgetKey, {
-    int sparkleCount = 6,
+    int? sparkleCount,
     Duration duration = const Duration(milliseconds: 800),
   }) {
     final RenderBox? renderBox = widgetKey.currentContext?.findRenderObject() as RenderBox?;
@@ -20,8 +30,11 @@ class AnimationService {
 
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
+    
+    final intensity = _getIntensity(context);
+    final count = sparkleCount ?? (6 * intensity * 2).round();
 
-    for (int i = 0; i < sparkleCount; i++) {
+    for (int i = 0; i < count; i++) {
       _createSparkleOverlay(
         context,
         position,
@@ -71,15 +84,18 @@ class AnimationService {
     BuildContext context,
     GlobalKey widgetKey, {
     String emoji = '🎉',
-    int count = 8,
+    int? count,
   }) {
     final RenderBox? renderBox = widgetKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
+    
+    final intensity = _getIntensity(context);
+    final celebrationCount = count ?? (8 * intensity * 1.5).round();
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < celebrationCount; i++) {
       _createCelebrationOverlay(context, position, size, emoji, i);
     }
   }
@@ -662,5 +678,43 @@ class AnimationPerformanceMonitor {
   /// Clear all timings
   static void clearTimings() {
     _timings.clear();
+  }
+}
+/// Service to manage background music and ambient sounds
+class MusicService {
+  static final MusicService _instance = MusicService._internal();
+  factory MusicService() => _instance;
+  MusicService._internal();
+
+  String? _currentTheme;
+  bool _isPlaying = false;
+
+  /// Update background music based on settings
+  void updateMusic(String theme, bool enabled) {
+    if (!enabled || theme == 'none') {
+      stop();
+      return;
+    }
+
+    if (_currentTheme == theme && _isPlaying) return;
+
+    _currentTheme = theme;
+    _isPlaying = true;
+    _startMusic(theme);
+  }
+
+  void _startMusic(String theme) {
+    // In a real app, this would use an audio player package (like audioplayers)
+    // For now, we simulate the logic and provide feedback via console
+    print('🎵 Background Music started: $theme');
+    
+    // Provide some haptic feedback to acknowledge music start
+    HapticFeedback.mediumImpact();
+  }
+
+  void stop() {
+    if (!_isPlaying) return;
+    _isPlaying = false;
+    print('🔇 Background Music stopped');
   }
 }

@@ -188,6 +188,100 @@ class BadgeDefinitions {
       category: 'Waste',
       isUnlocked: false,
     ),
+
+    // Advanced milestones
+    Badge(
+      id: 'planet_protector',
+      name: 'Planet Protector',
+      description: 'Earn 1000 eco points',
+      icon: '🌎',
+      requiredPoints: 1000,
+      category: 'Points',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'earth_guardian',
+      name: 'Earth Guardian',
+      description: 'Earn 2500 eco points',
+      icon: '🛡️',
+      requiredPoints: 2500,
+      category: 'Points',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'eco_overlord',
+      name: 'Eco Overlord',
+      description: 'Earn 5000 eco points',
+      icon: '👑',
+      requiredPoints: 5000,
+      category: 'Points',
+      isUnlocked: false,
+    ),
+
+    // New Categories
+    Badge(
+      id: 'clean_commuter',
+      name: 'Clean Commuter',
+      description: 'Use eco-friendly transport 10 times',
+      icon: '🚲',
+      requiredPoints: 150,
+      category: 'Transport',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'green_gourmet',
+      name: 'Green Gourmet',
+      description: 'Eat 10 eco-friendly meals',
+      icon: '🥗',
+      requiredPoints: 120,
+      category: 'Food',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'tree_hugger',
+      name: 'Tree Hugger',
+      description: 'Plant or care for 10 plants',
+      icon: '🌳',
+      requiredPoints: 180,
+      category: 'Nature',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'solar_superstar',
+      name: 'Solar Superstar',
+      description: 'Master energy saving habits',
+      icon: '☀️',
+      requiredPoints: 750,
+      category: 'Energy',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'ocean_ally',
+      name: 'Ocean Ally',
+      description: 'Save 1000 liters of water',
+      icon: '🌊',
+      requiredPoints: 800,
+      category: 'Water',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'century_striker',
+      name: 'Century Striker',
+      description: 'Maintain a 100-day streak',
+      icon: '💯',
+      requiredPoints: 1000,
+      category: 'Streak',
+      isUnlocked: false,
+    ),
+    Badge(
+      id: 'eco_scientist',
+      name: 'Eco Scientist',
+      description: 'Learn and apply 50 eco tips',
+      icon: '🧪',
+      requiredPoints: 600,
+      category: 'Starter',
+      isUnlocked: false,
+    ),
   ];
 
   /// Get badges by category
@@ -222,5 +316,18 @@ class BadgeDefinitions {
     }
     
     return newBadges;
+  }
+
+  /// Check if any badges should be revoked because points dropped
+  static List<Badge> checkForRevokedBadges(int totalPoints, List<Badge> currentBadges) {
+    List<Badge> revokedBadges = [];
+    
+    for (Badge badge in currentBadges) {
+      if (badge.isUnlocked && totalPoints < badge.requiredPoints) {
+        revokedBadges.add(badge);
+      }
+    }
+    
+    return revokedBadges;
   }
 }

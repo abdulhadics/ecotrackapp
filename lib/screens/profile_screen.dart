@@ -14,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _goalController = TextEditingController();
   bool _isEditing = false;
 
@@ -26,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _goalController.dispose();
     super.dispose();
   }
@@ -34,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = Provider.of<HiveService>(context, listen: false).currentUser;
     if (user != null) {
       _nameController.text = user.name;
+      _emailController.text = user.email;
       _goalController.text = user.ecoGoal;
     }
   }
@@ -86,6 +89,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 // Statistics
                 _buildStatistics(hiveService),
+
+                // Email Verification
+                _buildVerificationCard(hiveService),
 
                 const SizedBox(height: AppConstants.largePadding),
 
@@ -184,12 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Email Field
             TextFormField(
-              initialValue: user.email,
-              enabled: false,
+              controller: _emailController,
+              enabled: _isEditing,
               decoration: const InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email),
               ),
+              keyboardType: TextInputType.emailAddress,
             ),
 
             const SizedBox(height: AppConstants.mediumPadding),
@@ -233,133 +240,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatistics(HiveService hiveService) {
-    final totalHabits = hiveService.habits.length;
-    final completedHabits = hiveService.habits.where((h) => h.isCompleted).length;
     final unlockedBadges = hiveService.getUnlockedBadges().length;
+    final user = hiveService.currentUser;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.mediumPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Your Statistics',
-              style: Theme.of(context).textTheme.headlineSmall,
+      elevation: 0,
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildPremiumStatCard(
+              header: 'Total Points',
+              icon: Icons.emoji_events,
+              iconColor: AppColors.success,
+              value: '$unlockedBadges',
+              label: 'Badges',
             ),
-            const SizedBox(height: AppConstants.mediumPadding),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'Total Points',
-                    '${hiveService.currentUser?.totalPoints ?? 0}',
-                    Icons.stars,
-                    AppColors.warning,
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatItem(
-                    'Habits',
-                    '$completedHabits/$totalHabits',
-                    Icons.checklist,
-                    AppColors.success,
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(width: AppConstants.mediumPadding),
+          Expanded(
+            child: _buildPremiumStatCard(
+              header: 'Habits',
+              icon: Icons.local_fire_department,
+              iconColor: AppColors.error,
+              value: '${user?.currentStreak ?? 0} days',
+              label: 'Streak',
             ),
-            const SizedBox(height: AppConstants.mediumPadding),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'Badges',
-                    '$unlockedBadges',
-                    Icons.emoji_events,
-                    AppColors.primary,
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatItem(
-                    'Streak',
-                    '${hiveService.currentUser?.currentStreak ?? 0} days',
-                    Icons.local_fire_department,
-                    AppColors.error,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: AppConstants.largeIconSize),
-        const SizedBox(height: AppConstants.smallPadding),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
+  Widget _buildPremiumStatCard({
+    required String header,
+    required IconData icon,
+    required Color iconColor,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            header,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Icon(icon, color: iconColor, size: 32),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: iconColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),
+          ),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSettings(HiveService hiveService) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.mediumPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Settings',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppConstants.mediumPadding),
-
-            // Dark Mode Toggle
-            ListTile(
-              leading: Icon(
-                hiveService.currentUser?.isDarkMode == true 
-                    ? Icons.light_mode 
-                    : Icons.dark_mode,
-              ),
-              title: const Text('Dark Mode'),
-              subtitle: Text(
-                hiveService.currentUser?.isDarkMode == true 
-                    ? 'Currently enabled' 
-                    : 'Currently disabled',
-              ),
-              trailing: Switch(
-                value: hiveService.currentUser?.isDarkMode ?? false,
-                onChanged: (value) => hiveService.toggleDarkMode(),
+            Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8),
+              child: Text(
+                'Settings',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-
-            const Divider(),
+            const SizedBox(height: 8),
 
             // Notifications
             ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Notifications'),
-              subtitle: const Text('Daily eco reminders'),
+              leading: const Icon(Icons.notifications, color: Colors.black87),
+              title: const Text(
+                'Notifications',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                'Daily eco reminders',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
               trailing: Switch(
-                value: true, // This would be connected to actual notification settings
-                onChanged: (value) {
-                  // Handle notification toggle
-                },
+                value: true, 
+                onChanged: (value) {},
+                activeColor: AppColors.success,
               ),
             ),
           ],
@@ -369,34 +377,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAppInfo() {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.mediumPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'App Information',
-              style: Theme.of(context).textTheme.headlineSmall,
+            Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8),
+              child: Text(
+                'App Information',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            const SizedBox(height: AppConstants.mediumPadding),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('Version'),
-              subtitle: Text(AppConstants.appVersion),
-            ),
-            ListTile(
-              leading: const Icon(Icons.description),
-              title: const Text('Description'),
-              subtitle: Text(AppConstants.appDescription),
-            ),
-            ListTile(
-              leading: const Icon(Icons.eco),
-              title: const Text('Made with'),
-              subtitle: const Text('Flutter & Hive'),
-            ),
+            const SizedBox(height: 8),
+            _buildAppInfoTile(Icons.info, 'Version', AppConstants.appVersion),
+            _buildAppInfoTile(Icons.description, 'Description', AppConstants.appDescription),
+            _buildAppInfoTile(Icons.eco, 'Made with', 'Flutter & Hive'),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAppInfoTile(IconData icon, String title, String value) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.black87),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        value,
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
       ),
     );
   }
@@ -407,15 +434,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     if (currentUser == null) return;
 
+    final newEmail = _emailController.text.trim();
+    bool emailChanged = newEmail != currentUser.email;
+
     final updatedUser = currentUser.copyWith(
       name: _nameController.text.trim(),
+      email: newEmail,
       ecoGoal: _goalController.text.trim(),
+      isEmailVerified: emailChanged ? false : currentUser.isEmailVerified,
     );
 
     final success = await hiveService.updateUser(updatedUser);
     
     if (success && mounted) {
       setState(() => _isEditing = false);
+      if (emailChanged) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email updated. Please verify your new email.')),
+        );
+      }
     }
   }
 
@@ -425,5 +462,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${months[date.month - 1]} ${date.year}';
+  }
+
+  Widget _buildVerificationCard(HiveService hiveService) {
+    final bool isVerified = hiveService.currentUser?.isEmailVerified ?? false;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isVerified ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isVerified ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isVerified ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isVerified ? Icons.verified_user : Icons.mail_outline,
+                color: isVerified ? Colors.green : Colors.red,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isVerified ? 'Email Verified' : 'Email Not Verified',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isVerified ? Colors.green : Colors.red,
+                    ),
+                  ),
+                  Text(
+                    isVerified 
+                        ? 'Great! Your email is confirmed.' 
+                        : 'Verify your email to secure your account.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isVerified)
+              ElevatedButton(
+                onPressed: () => _showOTPDialog(hiveService),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Verify Now', style: TextStyle(fontSize: 12)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOTPDialog(HiveService hiveService) async {
+    final String sentOTP = await hiveService.sendVerificationOTP();
+    final TextEditingController otpController = TextEditingController();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Verify Email'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('A 6-digit code has been sent to your email. (Check debug logs in this demo)'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Enter 6-digit code',
+                border: OutlineInputBorder(),
+              ),
+              maxLength: 6,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (otpController.text == sentOTP) {
+                Navigator.pop(context);
+                hiveService.setEmailVerified();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invalid OTP! Please try again.')),
+                );
+              }
+            },
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
   }
 }
