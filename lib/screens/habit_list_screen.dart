@@ -7,7 +7,7 @@ import '../widgets/habit_card.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 
-/// Screen displaying all habits with filtering options
+/// Screen displaying all logged ESG activities with filtering options
 class HabitListScreen extends StatefulWidget {
   const HabitListScreen({super.key});
 
@@ -19,14 +19,32 @@ class _HabitListScreenState extends State<HabitListScreen> {
   String _selectedCategory = 'All';
   String _selectedStatus = 'All';
 
+  String _getCategoryShortName(String category) {
+    switch (category) {
+      case HabitCategory.water:
+        return "Water";
+      case HabitCategory.energy:
+        return "Energy";
+      case HabitCategory.waste:
+        return "Waste";
+      case HabitCategory.transport:
+        return "Transport";
+      case HabitCategory.food:
+        return "Supply Chain";
+      default:
+        return "General";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🌿 My Eco Habits'),
+        title: const Text('📋 ESG Compliance Ledger'),
         actions: [
           IconButton(
-            icon: const Text('🌱', style: TextStyle(fontSize: 24)),
+            icon: const Icon(Icons.add),
+            tooltip: 'Log New ESG Activity',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const AddHabitScreen()),
             ),
@@ -98,7 +116,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: AppConstants.smallPadding),
                         child: FilterChip(
-                          label: Text(category),
+                          label: Text(category == 'All' ? 'All Categories' : _getCategoryShortName(category)),
                           selected: _selectedCategory == category,
                           onSelected: (selected) {
                             setState(() {
@@ -117,7 +135,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
           // Status Filter
           Row(
             children: [
-              const Icon(Icons.check_circle, size: 20),
+              const Icon(Icons.verified_user, size: 20),
               const SizedBox(width: AppConstants.smallPadding),
               const Text('Status:'),
               const SizedBox(width: AppConstants.smallPadding),
@@ -126,10 +144,13 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: ['All', 'Completed', 'Pending'].map((status) {
+                      String label = 'All Entries';
+                      if (status == 'Completed') label = 'Audited';
+                      if (status == 'Pending') label = 'Pending';
                       return Padding(
                         padding: const EdgeInsets.only(right: AppConstants.smallPadding),
                         child: FilterChip(
-                          label: Text(status),
+                          label: Text(label),
                           selected: _selectedStatus == status,
                           onSelected: (selected) {
                             setState(() {
@@ -154,20 +175,21 @@ class _HabitListScreenState extends State<HabitListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            '🌱',
-            style: TextStyle(fontSize: 80),
+          const Icon(
+            Icons.assignment_turned_in_outlined,
+            size: 80,
+            color: Colors.grey,
           ),
           const SizedBox(height: AppConstants.mediumPadding),
           Text(
-            'No habits found',
+            'No ESG Logs Found',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: AppConstants.smallPadding),
           Text(
-            'Plant your first eco-friendly habit! 🌱',
+            'Log your first ESG activity to the secure ledger! 📋',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Colors.grey.shade500,
             ),
@@ -177,8 +199,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const AddHabitScreen()),
             ),
-            icon: const Text('🌱'),
-            label: const Text('Plant New Habit'),
+            icon: const Icon(Icons.add),
+            label: const Text('Log New ESG Activity'),
           ),
         ],
       ),

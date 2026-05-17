@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'power_mode_widgets.dart';
 
 /// Magic Mode Theme with vibrant, child-friendly colors and animations
 class MagicModeTheme {
@@ -837,4 +838,8 @@ class _MagicFABState extends State<MagicFAB>
       },
     );
   }
+}
+
+extension PowerModeThemeCorporate on PowerModeTheme {
+  static ThemeData get corporateThemeData => PowerModeTheme.corporateThemeData;
 }

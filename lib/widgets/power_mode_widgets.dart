@@ -95,6 +95,78 @@ class PowerModeTheme {
       ),
     );
   }
+
+  /// Corporate theme configuration for Power Mode (Enterprise dark)
+  static ThemeData get corporateThemeData {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0D1B2A), // Dark navy surface
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF00C896), // Accent: Color(0xFF00C896) (audit green)
+        secondary: Color(0xFF1B2B3B), // Card color
+        surface: Color(0xFF1B2B3B),
+        background: Color(0xFF0D1B2A),
+      ),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF00C896),
+          fontFamily: 'sans-serif',
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF00C896),
+          fontFamily: 'sans-serif',
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontFamily: 'sans-serif',
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: Colors.white70,
+          fontFamily: 'sans-serif',
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: Colors.white70,
+          fontFamily: 'sans-serif',
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.normal,
+          color: Colors.white54,
+          fontFamily: 'sans-serif',
+        ),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontFamily: 'sans-serif',
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: const Color(0xFF1B2B3B), // Card color: Color(0xFF1B2B3B)
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF0D1B2A),
+        selectedItemColor: Color(0xFF00C896),
+        unselectedItemColor: Colors.white30,
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
 }
 
 /// Power Mode Data Card with detailed statistics

@@ -5,7 +5,7 @@ import '../models/habit_model.dart';
 import '../services/hive_service.dart';
 import '../utils/constants.dart';
 
-/// Screen for adding new eco-friendly habits
+/// Screen for logging new corporate ESG compliance activities
 class AddHabitScreen extends StatefulWidget {
   const AddHabitScreen({super.key});
 
@@ -29,18 +29,33 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     super.dispose();
   }
 
+  String _getCategoryDisplayName(String category) {
+    switch (category) {
+      case HabitCategory.water:
+        return "Resource Optimization (Water)";
+      case HabitCategory.energy:
+        return "Carbon Mitigation (Energy)";
+      case HabitCategory.waste:
+        return "Circular Economy (Waste)";
+      case HabitCategory.transport:
+        return "Transit Auditing (Transport)";
+      case HabitCategory.food:
+        return "Supply Chain (Food)";
+      default:
+        return "General Operational (ESG)";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🌱 Plant New Habit'),
+        title: const Text('Log ESG Activity'),
         actions: [
-          TextButton(
+          IconButton(
             onPressed: _saveHabit,
-            child: const Text(
-              '🌱 Plant',
-              style: TextStyle(color: Colors.white),
-            ),
+            icon: const Icon(Icons.check),
+            tooltip: 'Save ESG Log',
           ),
         ],
       ),
@@ -55,13 +70,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Habit Title',
-                  hintText: 'e.g., Use reusable water bottle',
-                  prefixIcon: Icon(Icons.title),
+                  labelText: 'ESG Activity Title',
+                  hintText: 'e.g., Low-carbon transit trip, solar microgrid optimization',
+                  prefixIcon: Icon(Icons.assessment),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a habit title';
+                    return 'Please enter an ESG activity title';
                   }
                   return null;
                 },
@@ -73,9 +88,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Add more details about this habit',
-                  prefixIcon: Icon(Icons.description),
+                  labelText: 'Audit Documentation & Supporting Evidence (Optional)',
+                  hintText: ' Odometer readings, route waypoints, route sync packets, receipt hash...',
+                  prefixIcon: Icon(Icons.article),
                 ),
                 maxLines: 3,
               ),
@@ -84,7 +99,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
               // Category Selection
               Text(
-                'Category',
+                'ESG Compliance Category',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -101,7 +116,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       children: [
                         Text(HabitCategory.icons[category] ?? '🌱'),
                         const SizedBox(width: AppConstants.smallPadding),
-                        Text(category),
+                        Text(_getCategoryDisplayName(category)),
                       ],
                     ),
                     selected: isSelected,
@@ -120,7 +135,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
               // Points Selection
               Text(
-                'Points',
+                'Compliance Credits / ESG Points',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -131,7 +146,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 min: 5,
                 max: 50,
                 divisions: 9,
-                label: '$_selectedPoints points',
+                label: '$_selectedPoints Credits',
                 onChanged: (value) {
                   setState(() {
                     _selectedPoints = value.round();
@@ -141,8 +156,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  Text('5 pts'),
-                  Text('50 pts'),
+                  Text('5 Credits'),
+                  Text('50 Credits'),
                 ],
               ),
 
@@ -150,7 +165,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
               // Date Selection
               Text(
-                'Date',
+                'Audit Execution Timestamp',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -188,7 +203,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _saveHabit,
-                  child: const Text('🌱 Plant Habit'),
+                  child: const Text('Log ESG Activity to Ledger'),
                 ),
               ),
             ],
@@ -206,7 +221,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Preview',
+              'ESG Verification Sandbox',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -219,7 +234,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 Expanded(
                   child: Text(
                     _titleController.text.isEmpty 
-                        ? 'Habit Title' 
+                        ? 'ESG Activity Name' 
                         : _titleController.text,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -236,7 +251,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '+$_selectedPoints',
+                    '+$_selectedPoints pts',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -267,7 +282,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    _selectedCategory,
+                    _getCategoryDisplayName(_selectedCategory),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: _getCategoryColor(_selectedCategory),
                       fontWeight: FontWeight.w500,

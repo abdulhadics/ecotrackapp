@@ -63,6 +63,23 @@ class _HabitCardState extends State<HabitCard>
     super.dispose();
   }
 
+  String _getCategoryDisplayName(String category) {
+    switch (category) {
+      case HabitCategory.water:
+        return "Water Optimization";
+      case HabitCategory.energy:
+        return "Carbon Mitigation";
+      case HabitCategory.waste:
+        return "Circular Economy";
+      case HabitCategory.transport:
+        return "Transit Auditing";
+      case HabitCategory.food:
+        return "Supply Chain";
+      default:
+        return "General ESG";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -73,7 +90,7 @@ class _HabitCardState extends State<HabitCard>
               ? AppTheme.getAnimatedGlowDecoration(
                   AppColors.glowGreen,
                   _glowAnimation.value,
-                )
+                  )
               : null,
           child: Card(
             elevation: widget.habit.isCompleted ? 6 : 2,
@@ -241,7 +258,7 @@ class _HabitCardState extends State<HabitCard>
                                 ),
                               ),
                               child: Text(
-                                widget.habit.category,
+                                _getCategoryDisplayName(widget.habit.category),
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: _getCategoryColor(widget.habit.category),
                                   fontWeight: FontWeight.w600,

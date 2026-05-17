@@ -8,6 +8,7 @@ import 'services/hive_service.dart';
 import 'services/notification_service.dart';
 import 'services/settings_service.dart';
 import 'services/api_service.dart';
+import 'services/discord_service.dart';
 import 'screens/splash_screen.dart';
 import 'utils/theme.dart';
 import 'utils/constants.dart';
@@ -46,6 +47,7 @@ class EcoTrackApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => HiveService()),
+        ChangeNotifierProvider(create: (_) => DiscordService()),
         ChangeNotifierProvider.value(value: settingsService),
       ],
       child: Consumer<SettingsService>(

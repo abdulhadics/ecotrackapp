@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../services/hive_service.dart';
-import '../models/habit_model.dart';
-import '../services/notification_service.dart';
 import '../services/settings_service.dart';
-import '../utils/constants.dart';
-import '../widgets/dynamic_habit_list.dart';
+import '../services/hive_service.dart';
 import '../widgets/magic_mode_widgets.dart';
 import '../widgets/power_mode_widgets.dart';
-import '../widgets/earth_floating_elements.dart';
-import 'add_habit_screen.dart';
+import '../widgets/AlgorithmicsCard.dart';
+import '../utils/constants.dart';
+import '../models/habit_model.dart';
+import '../widgets/dynamic_habit_list.dart';
 import 'habit_list_screen.dart';
-import 'summary_screen.dart';
-import 'rewards_screen.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
+import 'add_habit_screen.dart';
+import 'map_deed_screen.dart';
+import 'admin_reports_screen.dart';
 
-/// Main home screen with dashboard
-/// Shows today's eco points, habits, and quick actions
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,504 +22,109 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const DashboardTab(),
-    const HabitListScreen(),
-    const SummaryScreen(),
-    const RewardsScreen(),
-    const ProfileScreen(),
-    const SettingsScreen(),
-  ];
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Consumer<SettingsService>(
       builder: (context, settingsService, child) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
-          bottomNavigationBar: _buildBottomNavigationBar(settingsService),
-          floatingActionButton: _buildFloatingActionButton(settingsService),
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomNavigationBar(SettingsService settingsService) {
-    if (settingsService.isMagicMode) {
-      return _buildMagicBottomNavigationBar();
-    } else {
-      return _buildPowerBottomNavigationBar();
-    }
-  }
-
-  Widget _buildMagicBottomNavigationBar() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: MagicModeTheme.magicBackground,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: MagicModeTheme.magicPrimary,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Text('🏠', style: TextStyle(fontSize: 20)),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('🌱', style: TextStyle(fontSize: 20)),
-            label: 'Habits',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('📊', style: TextStyle(fontSize: 20)),
-            label: 'Summary',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('🏆', style: TextStyle(fontSize: 20)),
-            label: 'Rewards',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('👤', style: TextStyle(fontSize: 20)),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Text('🎨', style: TextStyle(fontSize: 20)),
-            label: 'Settings',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPowerBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
-      selectedItemColor: PowerModeTheme.powerPrimary,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: PowerModeTheme.powerSurface,
-      elevation: 8,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.eco_outlined),
-          activeIcon: Icon(Icons.eco),
-          label: 'Habits',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.analytics_outlined),
-          activeIcon: Icon(Icons.analytics),
-          label: 'Summary',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.emoji_events_outlined),
-          activeIcon: Icon(Icons.emoji_events),
-          label: 'Rewards',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          activeIcon: Icon(Icons.settings),
-          label: 'Settings',
-        ),
-      ],
-    );
-  }
-
-  Widget? _buildFloatingActionButton(SettingsService settingsService) {
-    if (_selectedIndex != 0) return const SizedBox.shrink();
-
-    if (settingsService.isMagicMode) {
-      return MagicFAB(
-        emoji: '🌱',
-        onPressed: () => _navigateToAddHabit(),
-      );
-    } else {
-      return FloatingActionButton(
-        onPressed: () => _navigateToAddHabit(),
-        backgroundColor: PowerModeTheme.powerPrimary,
-        child: const Icon(Icons.add, color: Colors.white),
-      );
-    }
-  }
-
-  void _navigateToAddHabit() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const AddHabitScreen()),
-    );
-  }
-}
-
-/// Dashboard tab showing today's progress with welcome notifications
-class DashboardTab extends StatefulWidget {
-  const DashboardTab({super.key});
-
-  @override
-  State<DashboardTab> createState() => _DashboardTabState();
-}
-
-class _DashboardTabState extends State<DashboardTab> {
-  bool _hasShownWelcome = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _showWelcomeNotification();
-  }
-
-  Future<void> _showWelcomeNotification() async {
-    if (!_hasShownWelcome) {
-      await Future.delayed(const Duration(seconds: 1));
-      await NotificationService.showWelcomeNotification();
-      setState(() {
-        _hasShownWelcome = true;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer2<HiveService, SettingsService>(
-      builder: (context, hiveService, settingsService, child) {
-        if (hiveService.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
+        final hiveService = Provider.of<HiveService>(context);
         final user = hiveService.currentUser;
-        final List<Habit> todaysHabits = hiveService.getTodaysHabits();
-        final int todaysPoints = hiveService.getTodaysPoints();
-        final int completedHabits = hiveService.getTodaysCompletedHabits();
+        final userName = user?.name ?? 'Eco Warrior';
+        final totalPoints = user?.totalPoints ?? 0;
+        final streak = user?.currentStreak ?? 0;
+        final todaysHabits = hiveService.getTodaysHabits();
+        final todaysPoints = hiveService.getTodaysPoints();
 
         return Scaffold(
-          appBar: _buildAppBar(settingsService, user?.name ?? 'Eco Warrior'),
-          body: Container(
-            decoration: settingsService.isMagicMode
-                ? const BoxDecoration(gradient: MagicModeTheme.magicBackground)
-                : null,
-            child: settingsService.isMagicMode
-                ? EarthFloatingElements(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 800),
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.all(AppConstants.mediumPadding),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Points Badge
-                              _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
-
-                              const SizedBox(height: AppConstants.largePadding),
-
-                              // Algorithmics Card (NEW: Research Layer)
-                              AlgorithmicsCard(),
-
-                              const SizedBox(height: AppConstants.largePadding),
-
-                              // Today's Progress
-                              _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
-
-                              const SizedBox(height: AppConstants.largePadding),
-
-                              // Quick Actions
-                              _buildQuickActions(context, settingsService),
-
-                              const SizedBox(height: AppConstants.largePadding),
-
-                              // Recent Habits
-                              _buildRecentHabits(context, settingsService, todaysHabits),
-
-                              const SizedBox(height: AppConstants.largePadding),
-
-                              // Eco Tip
-                              _buildEcoTip(context),
-                              
-                              const SizedBox(height: 100), // Bottom padding for FAB
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(AppConstants.mediumPadding),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Points Badge
-                            _buildPointsBadge(settingsService, user?.totalPoints ?? 0, todaysPoints, user?.currentStreak ?? 0),
-
-                            const SizedBox(height: AppConstants.largePadding),
-
-                            // Algorithmics Card
-                            AlgorithmicsCard(),
-
-                            const SizedBox(height: AppConstants.largePadding),
-
-                            // Today's Progress
-                            _buildTodaysProgress(context, settingsService, todaysHabits, completedHabits, todaysPoints),
-
-                            const SizedBox(height: AppConstants.largePadding),
-
-                            // Quick Actions
-                            _buildQuickActions(context, settingsService),
-
-                            const SizedBox(height: AppConstants.largePadding),
-
-                            // Recent Habits
-                            _buildRecentHabits(context, settingsService, todaysHabits),
-
-                            const SizedBox(height: AppConstants.largePadding),
-
-                            // Analytics for Power Mode
-                            _buildAnalytics(context, settingsService, hiveService),
-                            
-                            const SizedBox(height: 100),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+          appBar: _buildAppBar(settingsService, userName),
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildDashboard(settingsService, hiveService, todaysHabits, totalPoints, todaysPoints, streak),
+              const MapDeedScreen(),
+              const AdminReportsScreen(),
+            ],
           ),
+          bottomNavigationBar: settingsService.isMagicMode 
+              ? _buildMagicBottomNavigationBar() 
+              : _buildPowerBottomNavigationBar(),
+          floatingActionButton: _currentIndex != 0 
+              ? null
+              : (settingsService.isMagicMode 
+                  ? MagicFAB(emoji: '🌱', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddHabitScreen())))
+                  : FloatingActionButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddHabitScreen())),
+                      backgroundColor: const Color(0xFF00C896),
+                      child: const Icon(Icons.add),
+                    )),
         );
       },
     );
   }
 
   PreferredSizeWidget _buildAppBar(SettingsService settingsService, String userName) {
-    final Uri dashboardUri = Uri.parse('https://supabase.com/dashboard'); // Placeholder for B2B portal
-
+    final Uri dashboardUri = Uri.parse('https://supabase.com/dashboard');
     if (settingsService.isMagicMode) {
       return AppBar(
         title: Text('🌿 Welcome, $userName!'),
-        backgroundColor: MagicModeTheme.magicBackground.colors.first,
+        backgroundColor: const Color(0xFFE8F5E8),
         elevation: 0,
         actions: [
-          // Open Web Dashboard Button
           IconButton(
-            tooltip: 'Open Web Dashboard',
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.open_in_new_rounded, color: Colors.blueAccent, size: 20),
-            ),
-            onPressed: () async {
-              if (await canLaunchUrl(dashboardUri)) {
-                await launchUrl(dashboardUri, mode: LaunchMode.externalApplication);
-              }
-            },
-          ),
-          IconButton(
-            icon: const Text('🎨', style: TextStyle(fontSize: 20)),
-            onPressed: () {
-              // Navigate to settings
-            },
+            icon: const Icon(Icons.open_in_new_rounded, color: Colors.blueAccent),
+            onPressed: () => launchUrl(dashboardUri),
           ),
         ],
       );
     } else {
       return AppBar(
-        title: Text('Welcome, $userName'),
-        backgroundColor: PowerModeTheme.powerPrimary,
+        title: Text('EcoTrack | $userName'),
+        backgroundColor: const Color(0xFF0D1B2A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          TextButton.icon(
-            onPressed: () async {
-              if (await canLaunchUrl(dashboardUri)) {
-                await launchUrl(dashboardUri, mode: LaunchMode.externalApplication);
-              }
-            },
-            icon: const Icon(Icons.open_in_new, color: Colors.white, size: 18),
-            label: const Text('DASHBOARD', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-          ),
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Navigate to settings
-            },
+            icon: const Icon(Icons.open_in_new, size: 18),
+            onPressed: () => launchUrl(dashboardUri),
           ),
         ],
       );
     }
   }
 
-  Widget _buildPointsBadge(SettingsService settingsService, int totalPoints, int todaysPoints, int streak) {
-    if (settingsService.isMagicMode) {
-      return MagicCard(
-        glowColor: MagicModeTheme.magicSuccess,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              // Enhanced earth-themed icon
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: MagicModeTheme.earthGradient,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: MagicModeTheme.magicSuccess.withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    '🌍',
-                    style: TextStyle(fontSize: 30),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$totalPoints',
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: MagicModeTheme.magicSuccess,
-                      ),
-                    ),
-                    Text(
-                      'Total Eco Points',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: MagicModeTheme.magicSuccess,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: MagicModeTheme.magicAccent.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '+$todaysPoints today',
-                            style: const TextStyle(
-                              color: MagicModeTheme.magicSuccess,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: MagicModeTheme.magicGold.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '$streak day streak',
-                            style: const TextStyle(
-                              color: MagicModeTheme.magicGold,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      return PowerDataCard(
-        title: 'Total Points',
-        value: totalPoints.toString(),
-        subtitle: '+$todaysPoints today • $streak day streak',
-        icon: Icons.eco,
-        color: PowerModeTheme.powerSuccess,
-      );
-    }
+  Widget _buildDashboard(SettingsService settingsService, HiveService hiveService, List<Habit> todaysHabits, int totalPoints, int todaysPoints, int streak) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPointsBadge(settingsService, totalPoints, todaysPoints, streak),
+          const SizedBox(height: 24),
+          const AlgorithmicsCard(),
+          const SizedBox(height: 24),
+          _buildQuickEntry(context, settingsService),
+          const SizedBox(height: 24),
+          _buildRecentHabits(context, settingsService, todaysHabits),
+        ],
+      ),
+    );
   }
 
-  Widget _buildTodaysProgress(BuildContext context, SettingsService settingsService, List todaysHabits, int completedCount, int todaysPoints) {
+  Widget _buildPointsBadge(SettingsService settingsService, int totalPoints, int todaysPoints, int streak) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.mediumPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(20),
+        child: Row(
           children: [
-            Text(
-              "Today's Progress",
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppConstants.mediumPadding),
-            Row(
+            const Text('🌍', style: TextStyle(fontSize: 40)),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _buildProgressItem(
-                    context,
-                    'Completed',
-                    '$completedCount/${todaysHabits.length}',
-                    '✅',
-                    AppColors.success,
-                  ),
-                ),
-                Expanded(
-                  child: _buildProgressItem(
-                    context,
-                    'Points Earned',
-                    '$todaysPoints',
-                    '⭐',
-                    AppColors.warning,
-                  ),
-                ),
+                Text('$totalPoints', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                const Text('Total Eco Points'),
               ],
-            ),
-            const SizedBox(height: AppConstants.mediumPadding),
-            LinearProgressIndicator(
-              value: todaysHabits.isEmpty ? 0 : (completedCount / todaysHabits.length),
-              backgroundColor: Colors.grey.shade300,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ],
         ),
@@ -533,61 +132,34 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildProgressItem(BuildContext context, String label, String value, dynamic icon, Color color) {
-    return Column(
-      children: [
-        icon is IconData 
-            ? Icon(icon, color: color, size: AppConstants.largeIconSize)
-            : Text(icon, style: TextStyle(fontSize: AppConstants.largeIconSize)),
-        const SizedBox(height: AppConstants.smallPadding),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context, SettingsService settingsService) {
+  Widget _buildQuickEntry(BuildContext context, SettingsService settingsService) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
-          style: Theme.of(context).textTheme.headlineSmall,
+          'Quick Entry',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: settingsService.isMagicMode ? const Color(0xFF1B5E20) : Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const SizedBox(height: AppConstants.mediumPadding),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: _buildActionCard(
-                context,
-                'Plant Habit',
-                '🌱',
-                AppColors.primary,
-                () => Navigator.of(context).push(
+              child: _buildActionCard(context, 'Log Trip', Icons.directions_run, const Color(0xFF00C896), () {
+                Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const AddHabitScreen()),
-                ),
-              ),
+                );
+              }),
             ),
-            const SizedBox(width: AppConstants.mediumPadding),
+            const SizedBox(width: 16),
             Expanded(
-              child: _buildActionCard(
-                context,
-                'View Garden',
-                '🌿',
-                AppColors.secondary,
-                () => Navigator.of(context).push(
+              child: _buildActionCard(context, 'View Logs', Icons.list_alt, Colors.blueGrey, () {
+                Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const HabitListScreen()),
-                ),
-              ),
+                );
+              }),
             ),
           ],
         ),
@@ -595,26 +167,17 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildActionCard(BuildContext context, String title, dynamic icon, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
     return Card(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         child: Padding(
-          padding: const EdgeInsets.all(AppConstants.mediumPadding),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              icon is IconData 
-                  ? Icon(icon, color: color, size: AppConstants.largeIconSize)
-                  : Text(icon, style: TextStyle(fontSize: AppConstants.largeIconSize)),
-              const SizedBox(height: AppConstants.smallPadding),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -622,142 +185,34 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildRecentHabits(BuildContext context, SettingsService settingsService, List<Habit> todaysHabits) {
-    final pendingHabits = todaysHabits.where((habit) => !habit.isCompleted).toList();
-    final completedHabits = todaysHabits.where((habit) => habit.isCompleted).toList();
-    
-    return Column(
-      children: [
-        // Pending Habits
-        if (pendingHabits.isNotEmpty)
-          DynamicHabitList(
-            habits: pendingHabits,
-            title: "Pending Habits",
-            showCompletedHabits: false,
-          ),
-        
-        // Completed Habits
-        if (completedHabits.isNotEmpty) ...[
-          const SizedBox(height: AppConstants.largePadding),
-          DynamicHabitList(
-            habits: completedHabits,
-            title: "Completed Today",
-            showCompletedHabits: true,
-          ),
-        ],
-        
-        // Empty state if no habits
-        if (todaysHabits.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppConstants.largePadding),
-              child: Column(
-                children: [
-                  Text(
-                    '🌱',
-                    style: const TextStyle(fontSize: 48),
-                  ),
-                  const SizedBox(height: AppConstants.mediumPadding),
-                  Text(
-                    'No habits for today',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.smallPadding),
-                  Text(
-                    'Plant your first eco-friendly habit! 🌱',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        
-        // View all button if there are many habits
-        if (todaysHabits.length > 3)
-          Padding(
-            padding: const EdgeInsets.all(AppConstants.mediumPadding),
-            child: TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const HabitListScreen()),
-            ),
-            child: Text('View all ${todaysHabits.length} habits'),
-            ),
-          ),
+  Widget _buildRecentHabits(BuildContext context, SettingsService settingsService, List<Habit> habits) {
+    return DynamicHabitList(habits: habits, title: "Recent Trip Logs", showCompletedHabits: true);
+  }
+
+  Widget _buildMagicBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (i) => setState(() => _currentIndex = i),
+      items: const [
+        BottomNavigationBarItem(icon: Text('🏠', style: TextStyle(fontSize: 20)), label: 'Home'),
+        BottomNavigationBarItem(icon: Text('🌱', style: TextStyle(fontSize: 20)), label: 'Trip Logs'),
+        BottomNavigationBarItem(icon: Text('🏆', style: TextStyle(fontSize: 20)), label: 'ESG Reports'),
       ],
     );
   }
 
-  Widget _buildEcoTip(BuildContext context) {
-    final randomTip = AppConstants.ecoTips[
-      DateTime.now().millisecondsSinceEpoch % AppConstants.ecoTips.length
-    ];
-    
-    return MagicCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.mediumPadding),
-        child: Row(
-          children: [
-            const Text(
-              '💡',
-              style: TextStyle(fontSize: AppConstants.largeIconSize),
-            ),
-            const SizedBox(width: AppConstants.mediumPadding),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Eco Tip of the Day',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: MagicModeTheme.magicPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.smallPadding),
-                  Text(
-                    randomTip,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildPowerBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (i) => setState(() => _currentIndex = i),
+      backgroundColor: const Color(0xFF0D1B2A),
+      selectedItemColor: const Color(0xFF00C896),
+      unselectedItemColor: Colors.white30,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics), label: 'Trip Logs'),
+        BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description), label: 'ESG Reports'),
+      ],
     );
-  }
-
-  Widget _buildAnalytics(BuildContext context, SettingsService settingsService, HiveService hiveService) {
-    final weeklyData = hiveService.getWeeklyHabits();
-    final chartData = weeklyData.map((data) => ChartData(
-      label: _formatDate(data['date'] as DateTime),
-      value: (data['completed'] as int).toDouble(),
-    )).toList();
-
-    return PowerChart(
-      title: 'Weekly Progress',
-      data: chartData,
-      type: ChartType.bar,
-      xAxisLabel: 'Days',
-      yAxisLabel: 'Completed Habits',
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
-    
-    if (targetDate == today) {
-      return 'Today';
-    } else if (targetDate == today.subtract(const Duration(days: 1))) {
-      return 'Yesterday';
-    } else {
-      return '${date.day}/${date.month}';
-    }
   }
 }
